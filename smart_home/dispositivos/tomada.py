@@ -1,0 +1,1 @@
+# FSM + consumo Wh

@@ -1,0 +1,1 @@
+# FSM: parado/pausado/tocando

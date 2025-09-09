@@ -1,0 +1,1 @@
+# FSM + brilho/cor
