@@ -1,10 +1,8 @@
-# smart_home/dispositivos/porta.py
+# smart_home/dispositivos/porta.py : implementação da classe Porta com FSM.
 from enum import Enum, auto
 from typing import Any, Dict
 from transitions import Machine
-
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
-  
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA PORTA
 #--------------------------------------------------------------------------------------------------------------
@@ -12,23 +10,27 @@ class EstadoPorta(Enum):
     TRANCADA = auto()
     DESTRANCADA = auto()
     ABERTA = auto()
-
 #--------------------------------------------------------------------------------------------------------------
-
+# MÉTODO AUXILIAR PARA NOMES DE ESTADO
+#--------------------------------------------------------------------------------------------------------------
 def _nome_estado(x):
     """Converte estado (Enum ou str) para str."""
     return x.name if hasattr(x, "name") else str(x)
-
-
+#--------------------------------------------------------------------------------------------------------------
+# CLASSE PORTA
+#--------------------------------------------------------------------------------------------------------------
 class Porta(DispositivoBase):
     """
-    Porta eletrônica com FSM gerenciada pela biblioteca `transitions`.
-      - Estados: TRANCADA, DESTRANCADA, ABERTA
-      - destrancar: TRANCADA -> DESTRANCADA
-      - trancar:    DESTRANCADA -> TRANCADA
-      - abrir:      DESTRANCADA -> ABERTA
-      - fechar:     ABERTA -> DESTRANCADA
-      - Regra: tentar 'trancar' quando ABERTA não muda estado e incrementa tentativas_invalidas
+    Porta eletrônica com FSM gerenciada pela biblioteca `transitions`
+    Estados: TRANCADA, DESTRANCADA, ABERTA
+    Eventos/transições:
+    - destrancar: TRANCADA -> DESTRANCADA
+    - trancar:    DESTRANCADA -> TRANCADA
+    - abrir:      DESTRANCADA -> ABERTA
+    - fechar:     ABERTA -> DESTRANCADA
+    Regras: 
+    - tentar 'trancar' quando ABERTA não muda estado
+    -  incrementar tentativas_invalidas
     """
 
     def __init__(self, id: str, nome: str):
@@ -43,33 +45,33 @@ class Porta(DispositivoBase):
                 "trigger": "destrancar",
                 "source" : EstadoPorta.TRANCADA,
                 "dest"   : EstadoPorta.DESTRANCADA,
-                "after": "_apos_comando",
+                "after": "_apos_comando",                    # log após o comando
             },
             {
                 "trigger": "trancar",
                 "source": EstadoPorta.DESTRANCADA,
                 "dest": EstadoPorta.TRANCADA,
-                "after": "_apos_comando",
+                "after": "_apos_comando",                   # log após o comando
             },
             {
                 "trigger": "abrir",
                 "source": EstadoPorta.DESTRANCADA,
                 "dest": EstadoPorta.ABERTA,
-                "after": "_apos_comando",
+                "after": "_apos_comando",                   # log após o comando
             },
             {
-                "trigger": "fechar",
+                "trigger": "fechar",                       
                 "source": EstadoPorta.ABERTA,
                 "dest": EstadoPorta.DESTRANCADA,
-                "after": "_apos_comando",
+                "after": "_apos_comando",                  # log após o comando
             },
             # tentativa inválida: trancar quando ABERTA -> permanece ABERTA, conta tentativa
             {
                 "trigger": "trancar",
                 "source": EstadoPorta.ABERTA,
-                "dest": EstadoPorta.ABERTA, # permanece no mesmo estado 
+                "dest": EstadoPorta.ABERTA,                # permanece no mesmo estado 
                 "before": "_contar_tentativa_invalida",
-                "after": "_apos_comando_invalido",
+                "after": "_apos_comando_invalido",         # log após o comando inválido
             },
         ]
     
@@ -81,7 +83,7 @@ class Porta(DispositivoBase):
             initial=EstadoPorta.TRANCADA,             # estado inicial
             model_attribute="estado",                 # atributo que guarda o estado atual
             send_event=True,                          # envia o evento para os callbacks
-            after_state_change= self._apos_transicao, # callback após qualquer transição
+            after_state_change=self._apos_transicao,  # callback após qualquer transição
         )
 
     #--------------------------------------------------------------------------------------------------------------
@@ -115,7 +117,7 @@ class Porta(DispositivoBase):
         """Retorna os atributos da porta.
 
         Returns:
-            Dict[str, Any]: Mapeamento de atributos para seus valores.
+            Dict[str, Any]: Atributos da porta.
         """
         return {"tentativas_invalidas": self.tentativas_invalidas, "estado_nome": _nome_estado(self.estado)}
   
@@ -133,8 +135,6 @@ class Porta(DispositivoBase):
             "fechar": "ABERTA → DESTRANCADA",
         }
     
-    
-
     #--------------------------------------------------------------------------------------------------------------
     # CALLBACKS/ LOGGING HELPERS
     #--------------------------------------------------------------------------------------------------------------
