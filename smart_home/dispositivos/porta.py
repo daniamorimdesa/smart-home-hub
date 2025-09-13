@@ -1,7 +1,7 @@
 # smart_home/dispositivos/porta.py : implementação da classe Porta com FSM.
 from enum import Enum, auto
 from typing import Any, Dict
-from transitions import Machine
+from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA PORTA
@@ -88,8 +88,7 @@ class Porta(DispositivoBase):
 
     #--------------------------------------------------------------------------------------------------------------
     # MÉTODOS ABSTRATOS IMPLEMENTADOS
-    #--------------------------------------------------------------------------------------------------------------
-    
+    #--------------------------------------------------------------------------------------------------------------  
     def executar_comando(self, comando: str, /, **kwargs: Any) -> None:
         """Executa um comando na porta.
 
@@ -109,10 +108,17 @@ class Porta(DispositivoBase):
         if comando not in mapa:
             raise ValueError(f"Comando '{comando}' não suportado para porta '{self.id}'.")
         
-        antes = self.estado           # estado antes do comando
-        mapa[comando](**kwargs)       # executa o comando
-        
-        
+        try:
+            mapa[comando](**kwargs) # chamar o método da FSM
+            
+        except MachineError as e:
+            # comando inválido para o estado atual
+            payload = self.evento_comando(
+                comando=comando, antes=_nome_estado(self.estado), depois=_nome_estado(self.estado),
+                extra={"bloqueado": True, "motivo": str(e)}
+            )
+            print("[COMANDO-BLOQUEADO]", payload)
+
     def atributos(self) -> Dict[str, Any]:
         """Retorna os atributos da porta.
 

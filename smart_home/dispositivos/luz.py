@@ -176,7 +176,6 @@ class Luz(DispositivoBase):
     #--------------------------------------------------------------------------------------------------------------
     # MÉTODOS ABSTRATOS IMPLEMENTADOS
     #--------------------------------------------------------------------------------------------------------------
-    
     def executar_comando(self, comando: str, /, **kwargs: Any) -> None:
         """
         Comandos suportados:
@@ -196,10 +195,10 @@ class Luz(DispositivoBase):
             raise ValueError(f"Comando '{comando}' não suportado para luz '{self.id}'.")
         
         try:
-            mapa[comando](**kwargs)  # chamar o método correspondente
+            mapa[comando](**kwargs)  # chamar o método da FSM
             
         except MachineError as e:
-            # caso alguém tente disparar trigger em estado não permitido (sem nossa transição de bloqueio)
+            # comando inválido para o estado atual
             payload = self.evento_comando(
                 comando=comando, antes=_nome_estado(self.estado), depois=_nome_estado(self.estado),
                 extra={"bloqueado": True, "motivo": str(e)}
