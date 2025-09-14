@@ -330,7 +330,7 @@ class Radio(DispositivoBase):
         print("[COMANDO]", payload) # por enquanto, só console (depois mandamos ao logger)
         
 #--------------------------------------------------------------------------------------------------------------
-# Teste de uso da classe Luz
+# Teste de uso da classe Radio
 #--------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
     radio = Radio(id="radio_sala", nome="Rádio da Sala", volume_inicial=0, estacao_inicial=EstacaoRadio.MPB)
