@@ -248,16 +248,6 @@ def main():
 
     hub = Hub()
     
-
-    # Observers
-    hub.registrar_observer(ConsoleObserver())
-    hub.registrar_observer(CsvObserverTransitions(Path("data/logs/transitions.csv")))
-    
-    
-    # se quiser também um CSV geral:
-    hub.registrar_observer(CsvObserverEventos(Path("data/logs/events.csv")))
-    
-    
     # carrega config se existir; senão, defaults
     try:
         hub.carregar_config(cfg_path)
@@ -266,6 +256,14 @@ def main():
         hub.carregar_defaults()
         console.print(Panel.fit("[yellow]Usando configuração padrão.[/]", border_style="yellow"))
 
+
+    # Observers
+    hub.registrar_observer(ConsoleObserver())
+    hub.registrar_observer(CsvObserverTransitions(Path("data/logs/transitions.csv")))
+
+    # CSV geral:
+    hub.registrar_observer(CsvObserverEventos(Path("data/logs/events.csv")))
+    
     header()
 
     while True:

@@ -12,3 +12,15 @@ timestamp,id_dispositivo,evento,estado_origem,estado_destino
 2025-09-14T16:07:09,tomada_tv,desligar,LIGADA,DESLIGADA
 2025-09-14T16:07:45,tomada_tv,ligar,DESLIGADA,LIGADA
 2025-09-14T16:09:26,tomada_tv,desligar,LIGADA,DESLIGADA
+2025-09-14T17:25:09,tomada1,ligar,DESLIGADA,LIGADA
+2025-09-14T17:54:41,tomada_tv,ligar,DESLIGADA,LIGADA
+2025-09-14T17:55:06,cafeteira_cozinha,ligar,DESLIGADA,PRONTA
+2025-09-14T17:56:50,tomada_tv,desligar,LIGADA,DESLIGADA
+2025-09-14T17:57:09,tomada_tv,ligar,DESLIGADA,LIGADA
+2025-09-14T17:57:56,tomada_tv,desligar,LIGADA,DESLIGADA
+2025-09-14T18:17:42,cafe,preparar_bebida,DESLIGADA,DESLIGADA
+2025-09-14T18:18:00,cafe,ligar,DESLIGADA,PRONTA
+2025-09-14T18:18:15,cafe,preparar_bebida,PRONTA,PREPARANDO
+2025-09-14T18:18:35,cafe,reabastecer_maquina,PREPARANDO,PREPARANDO
+2025-09-14T18:19:29,cafe,finalizar_preparo,PREPARANDO,PRONTA
+2025-09-14T18:19:54,cafe,reabastecer_maquina,PRONTA,PRONTA

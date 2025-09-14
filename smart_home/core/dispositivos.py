@@ -90,15 +90,21 @@ class DispositivoBase(ABC):
             "atributos": self.atributos(),
         }
 
+    
     def alterar_atributo(self, chave: str, valor: Any) -> None:
-        """
-        Atualiza dinamicamente um atributo.
-        Subclasses podem sobrescrever para validações mais específicas.
-        """
+        reservados = {"id", "nome", "tipo", "estado", "maquina", "atributos"}
+        if chave in reservados:
+            raise AttributeError(f"'{chave}' é reservado e não pode ser alterado.")
+
+        atual = getattr(self, chave, None)
+        if callable(atual):
+            raise AttributeError(f"'{chave}' é um método/propriedade e não pode ser sobrescrito.")
+
         if hasattr(self, chave):
             setattr(self, chave, valor)
         else:
             raise AttributeError(f"Atributo '{chave}' não existe em {self.id}")
+
 
     def detalhes_str(self) -> str:
         """Retorna uma string formatada para exibir na CLI (listar dispositivos).
