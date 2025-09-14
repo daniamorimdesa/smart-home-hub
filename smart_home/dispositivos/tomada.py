@@ -134,8 +134,9 @@ class Tomada(DispositivoBase):
         """
         return {
             "potencia_w": self.potencia_w,
-            "consumo_wh": round(self.consumo_wh, 4),      # arredondar para 4 casas decimais
-            "estado_nome": _nome_estado(self.estado),     # nome do estado atual
+            "consumo_wh": round(self.consumo_wh, 4),                # consumo acumulado até o último desligamento 
+            "consumo_wh_total": round(self.consumo_wh_total(), 4),  # consumo total até o momento (inclui período atual se ligada)
+            "estado_nome": _nome_estado(self.estado),             
             # converte para str no padrão ISO(facilitar JSON e leitura)
             "ligada_desde": self._ligada_desde.isoformat() if self._ligada_desde else None, 
         }
@@ -158,12 +159,14 @@ class Tomada(DispositivoBase):
         """Marca o início do período em que a tomada foi ligada."""
         self._ligada_desde = datetime.now()
 
+    """ Métodos auxiliares
+    _agregar_consumo_e_limpar: atualiza o consumo acumulado e limpa o tempo
+    quando a tomada é desligada.
+    
+    consumo_wh_total: retorna o consumo total até o momento, incluindo o período 
+    atual se a tomada estiver ligada, mas não altera o estado interno."""
+    
     def _agregar_consumo_e_limpar(self, event) -> None:
-        """Agrega o consumo do período em que a tomada foi ligada e limpa a marcação.
-
-        Args:
-            event (Event): O evento que disparou a agregação.
-        """
         if self._ligada_desde is not None:  # se estava ligada
             agora = datetime.now()          # momento atual
             # calcular o tempo decorrido em horas
@@ -173,7 +176,17 @@ class Tomada(DispositivoBase):
             if delta_h > 0:
                 self.consumo_wh += self.potencia_w * delta_h # consumo em Wh(watt-hora)
         self._ligada_desde = None                            # limpar a marcação
-            
+    
+    def consumo_wh_total(self) -> float:
+        total = self.consumo_wh
+        # se estiver ligada, agrega o consumo desde que foi ligada
+        if self.estado == EstadoTomada.LIGADA and self._ligada_desde is not None:
+            # calcular o tempo decorrido em horas
+            delta_h = (datetime.now() - self._ligada_desde).total_seconds() / 3600.0
+            # agregar consumo (potência * tempo)
+            if delta_h > 0:
+                total += self.potencia_w * delta_h # consumo em Wh(watt-hora)
+        return total 
     #--------------------------------------------------------------------------------------------------------------
     # CALLBACKS/ LOGGING HELPERS
     #--------------------------------------------------------------------------------------------------------------
@@ -244,3 +257,4 @@ if __name__ == "__main__":
     print("------------------------------------------------------------------")
 
     print(f"Final: {tomada.estado.name} | potencia_w: {tomada.potencia_w} | consumo_wh: {round(tomada.consumo_wh, 2)} Wh")
+    print(f"Consumo total (inclui período atual se ligada): {round(tomada.consumo_wh_total(), 2)} Wh")
