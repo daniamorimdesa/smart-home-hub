@@ -218,7 +218,6 @@ class Radio(DispositivoBase):
         return {
             "estado_nome": _nome_estado(self.estado),
             "volume": self.volume,
-            "ultimo_volume": self.ultimo_volume,
             "estacao": self.estacao.name,
         }
     

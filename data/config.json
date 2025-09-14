@@ -3,22 +3,21 @@
     "id": "porta_entrada",
     "nome": "Porta da Entrada",
     "tipo": "PORTA",
-    "estado": "DESTRANCADA",
+    "estado": "TRANCADA",
     "atributos": {
       "tentativas_invalidas": 0,
-      "estado_nome": "DESTRANCADA"
+      "estado_nome": "TRANCADA"
     }
   },
   "luz_sala": {
     "id": "luz_sala",
     "nome": "Luz da Sala",
     "tipo": "LUZ",
-    "estado": "DESLIGADA",
+    "estado": "LIGADA",
     "atributos": {
-      "brilho": 0,
-      "ultimo_brilho": 75,
+      "brilho": 75,
       "cor": "QUENTE",
-      "estado_nome": "DESLIGADA"
+      "estado_nome": "LIGADA"
     }
   },
   "tomada_tv": {
@@ -28,8 +27,8 @@
     "estado": "DESLIGADA",
     "atributos": {
       "potencia_w": 150,
-      "consumo_wh": 0.0,
-      "consumo_wh_total": 0.0,
+      "consumo_wh": 6.4959,
+      "consumo_wh_total": 6.4959,
       "estado_nome": "DESLIGADA",
       "ligada_desde": null
     }
@@ -55,7 +54,6 @@
     "atributos": {
       "estado_nome": "LIGADO",
       "volume": 30,
-      "ultimo_volume": 30,
       "estacao": "MPB"
     }
   },
@@ -63,10 +61,10 @@
     "id": "persiana_quarto",
     "nome": "Persiana do Quarto",
     "tipo": "PERSIANA",
-    "estado": "ABERTA",
+    "estado": "PARCIAL",
     "atributos": {
-      "estado_nome": "ABERTA",
-      "abertura": 100
+      "estado_nome": "PARCIAL",
+      "abertura": 50
     }
   }
 }

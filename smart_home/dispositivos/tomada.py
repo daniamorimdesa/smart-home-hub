@@ -140,7 +140,7 @@ class Tomada(DispositivoBase):
             "consumo_wh_total": round(self.consumo_wh_total(), 4),  # consumo total até o momento (inclui período atual se ligada)
             "estado_nome": _nome_estado(self.estado),             
             # converte para str no padrão ISO(facilitar JSON e leitura)
-            "ligada_desde": self._ligada_desde.isoformat() if self._ligada_desde else None, 
+            "ligada_desde":self._ligada_desde.strftime("%d/%m/%Y %H:%M:%S") if self._ligada_desde else None,
         }
         
     def comandos_disponiveis(self) -> Dict[str, str]:

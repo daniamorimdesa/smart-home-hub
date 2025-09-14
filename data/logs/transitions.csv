@@ -2,3 +2,13 @@ timestamp,id_dispositivo,evento,estado_origem,estado_destino
 2025-09-14T15:40:23,porta_entrada,destrancar,TRANCADA,DESTRANCADA
 2025-09-14T15:40:44,luz_sala,desligar,LIGADA,DESLIGADA
 2025-09-14T15:42:12,persiana_quarto,abrir,PARCIAL,ABERTA
+2025-09-14T15:52:35,luz2,definir_brilho,LIGADA,LIGADA
+2025-09-14T15:55:07,luz_sala,desligar,LIGADA,DESLIGADA
+2025-09-14T15:57:54,cafeteira_cozinha,ligar,DESLIGADA,PRONTA
+2025-09-14T15:58:32,cafeteira_cozinha,preparar_bebida,PRONTA,PREPARANDO
+2025-09-14T16:00:47,tomada_tv,ligar,DESLIGADA,LIGADA
+2025-09-14T16:01:51,cafeteira_cozinha,finalizar_preparo,PREPARANDO,PRONTA
+2025-09-14T16:06:14,tomada_tv,ligar,DESLIGADA,LIGADA
+2025-09-14T16:07:09,tomada_tv,desligar,LIGADA,DESLIGADA
+2025-09-14T16:07:45,tomada_tv,ligar,DESLIGADA,LIGADA
+2025-09-14T16:09:26,tomada_tv,desligar,LIGADA,DESLIGADA

@@ -213,7 +213,7 @@ class Luz(DispositivoBase):
         """
         return {
             "brilho": self.brilho,
-            "ultimo_brilho": self.ultimo_brilho,
+            #"ultimo_brilho": self.ultimo_brilho,
             "cor": self.cor.name,
             "estado_nome": _nome_estado(self.estado)
         }
