@@ -3,22 +3,22 @@
     "id": "porta_entrada",
     "nome": "Porta da Entrada",
     "tipo": "PORTA",
-    "estado": "TRANCADA",
+    "estado": "DESTRANCADA",
     "atributos": {
       "tentativas_invalidas": 0,
-      "estado_nome": "TRANCADA"
+      "estado_nome": "DESTRANCADA"
     }
   },
   "luz_sala": {
     "id": "luz_sala",
     "nome": "Luz da Sala",
     "tipo": "LUZ",
-    "estado": "LIGADA",
+    "estado": "DESLIGADA",
     "atributos": {
-      "brilho": 75,
+      "brilho": 0,
       "ultimo_brilho": 75,
       "cor": "QUENTE",
-      "estado_nome": "LIGADA"
+      "estado_nome": "DESLIGADA"
     }
   },
   "tomada_tv": {
@@ -63,20 +63,10 @@
     "id": "persiana_quarto",
     "nome": "Persiana do Quarto",
     "tipo": "PERSIANA",
-    "estado": "PARCIAL",
+    "estado": "ABERTA",
     "atributos": {
-      "estado_nome": "PARCIAL",
-      "abertura": 50
-    }
-  },
-  "porta1": {
-    "id": "porta1",
-    "nome": "Porta de saída",
-    "tipo": "PORTA",
-    "estado": "TRANCADA",
-    "atributos": {
-      "tentativas_invalidas": 0,
-      "estado_nome": "TRANCADA"
+      "estado_nome": "ABERTA",
+      "abertura": 100
     }
   }
 }

@@ -51,15 +51,44 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from smart_home.core.eventos import Evento, TipoEvento
 from smart_home.core.logger import CsvLogger
 
+
 class Observer(ABC):
     @abstractmethod
     def on_event(self, evt: Evento) -> None:
-        ...
+        pass
+
+
+class CsvObserverTransitions(Observer):
+    """
+    Escreve SOMENTE transições de estado em CSV com as colunas do enunciado:
+    timestamp,id_dispositivo,evento,estado_origem,estado_destino
+    """
+    HEADERS = ["timestamp", "id_dispositivo", "evento", "estado_origem", "estado_destino"]
+
+    def __init__(self, path: Path) -> None:
+        self.path = Path(path)
+
+    def on_event(self, evt: Evento) -> None:
+        if evt.tipo != TipoEvento.TRANSICAO_ESTADO:
+            return
+        p = evt.payload
+        row = {
+            "timestamp": evt.timestamp,
+            "id_dispositivo": p.get("id", ""),
+            "evento": str(p.get("evento", "")).lower(),
+            "estado_origem": str(p.get("antes", "")).lower(),
+            "estado_destino": str(p.get("depois", "")).lower(),
+        }
+        CsvLogger().write_row(self.path, self.HEADERS, row)
+
+
+
+
 
 class ConsoleObserver(Observer):
     """Observer simples de console; útil para depuração."""

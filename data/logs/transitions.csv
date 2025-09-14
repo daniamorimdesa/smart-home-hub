@@ -1,0 +1,4 @@
+timestamp,id_dispositivo,evento,estado_origem,estado_destino
+2025-09-14T15:40:23,porta_entrada,destrancar,TRANCADA,DESTRANCADA
+2025-09-14T15:40:44,luz_sala,desligar,LIGADA,DESLIGADA
+2025-09-14T15:42:12,persiana_quarto,abrir,PARCIAL,ABERTA

@@ -66,12 +66,8 @@ class Hub:
     # Acoes
     def executar_comando(self, id: str, comando: str, **kwargs: Any) -> None:
         disp = self._exigir(id)
-        antes = getattr(disp.estado, "name", str(disp.estado))
         disp.executar_comando(comando, **kwargs)
-        depois = getattr(disp.estado, "name", str(disp.estado))
-        self._emitir(Evento(TipoEvento.COMANDO_EXECUTADO, {
-            "id": id, "comando": comando, "antes": antes, "depois": depois, **({"args": kwargs} if kwargs else {})
-        }))
+
 
     def alterar_atributo(self, id: str, chave: str, valor: Any) -> None:
         disp = self._exigir(id)

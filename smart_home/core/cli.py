@@ -253,6 +253,7 @@ def main():
     hub.registrar_observer(ConsoleObserver())
     hub.registrar_observer(CsvObserverTransitions(Path("data/logs/transitions.csv")))
     
+    
     # se quiser também um CSV geral:
     hub.registrar_observer(CsvObserverEventos(Path("data/logs/events.csv")))
     
