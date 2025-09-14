@@ -18,7 +18,7 @@ class TipoDeDispositivo(Enum):
     
     # extras
     CAFETEIRA = "CAFETEIRA"
-    PLAYER_MUSICA = "PLAYER_MUSICA"
+    RADIO = "RADIO"
     PROJETOR = "PROJETOR"         
 
 #--------------------------------------------------------------------------------------------------

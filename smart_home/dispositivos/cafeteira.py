@@ -67,63 +67,63 @@ class CafeteiraCapsulas(DispositivoBase):
             "trigger": "desligar",
             "source": [EstadoCafeteira.PRONTA, EstadoCafeteira.SEM_RECURSOS],
             "dest": EstadoCafeteira.DESLIGADA,
-            "after": "_apos_comando"
+            "after": "_apos_comando"                         # log do comando
             },
             {
             "trigger": "desligar",
             "source": EstadoCafeteira.PREPARANDO,
             "dest": EstadoCafeteira.PREPARANDO,
-            "after": "_comando_bloqueado"
+            "after": "_comando_bloqueado"                    # bloqueado se estiver preparando
             },
             # preparo
             {
             "trigger": "preparar_bebida",
             "source": EstadoCafeteira.PRONTA,
             "dest": EstadoCafeteira.PREPARANDO,
-            "conditions": "_recursos_ok",
-            "after": "_apos_comando"
+            "conditions": "_recursos_ok",                     # só prepara se houver recursos
+            "after": "_apos_comando"                          # log do comando
             },
             {
             "trigger": "preparar_bebida",
             "source": EstadoCafeteira.PRONTA,
             "dest": EstadoCafeteira.SEM_RECURSOS,
-            "unless": "_recursos_ok",
-            "after": "_faltou_recurso"
+            "unless": "_recursos_ok",                         # só prepara se houver recursos
+            "after": "_faltou_recurso"                        # log de falta de recurso
             },
             {
             "trigger": "finalizar_preparo",
             "source": EstadoCafeteira.PREPARANDO,
             "dest": EstadoCafeteira.PRONTA,
-            "before": "_consumir_e_registrar",
-            "after": "_apos_comando"
+            "before": "_consumir_e_registrar",                # consome recursos e registra no histórico
+            "after": "_apos_comando"                          # log do comando
             },
             # reabastecer (preventivo e por falta)
             {
             "trigger": "reabastecer_maquina",
             "source": EstadoCafeteira.SEM_RECURSOS,
             "dest": EstadoCafeteira.PRONTA,
-            "before": "_reabastecer_total",
-            "after": "_apos_comando"
+            "before": "_reabastecer_total",                   # reabastece todos os recursos
+            "after": "_apos_comando"                          # log do comando
             },
             {
             "trigger": "reabastecer_maquina",
             "source": EstadoCafeteira.PRONTA,
             "dest": EstadoCafeteira.PRONTA,
-            "before": "_reabastecer_total",
-            "after": "_apos_comando"
+            "before": "_reabastecer_total",                   # reabastece todos os recursos
+            "after": "_apos_comando"                          # log do comando
             },
             {
             "trigger": "reabastecer_maquina",
             "source": EstadoCafeteira.DESLIGADA,
             "dest": EstadoCafeteira.DESLIGADA,
-            "before": "_reabastecer_total",
-            "after": "_apos_comando"
+            "before": "_reabastecer_total",                   # reabastece todos os recursos
+            "after": "_apos_comando"                          # log do comando
             },
             {
             "trigger": "reabastecer_maquina",
             "source": EstadoCafeteira.PREPARANDO,
             "dest": EstadoCafeteira.PREPARANDO,
-            "after": "_comando_bloqueado"
+            "after": "_comando_bloqueado"                     # bloqueado se estiver preparando
             },
             # bloqueios adicionais (self-loops com comando_bloqueado)
             {
