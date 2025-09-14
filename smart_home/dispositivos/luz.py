@@ -3,6 +3,7 @@ from enum import Enum, auto
 from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.core.eventos import TipoEvento
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA LUZ E CORES SUPORTADAS
 #--------------------------------------------------------------------------------------------------------------
@@ -202,7 +203,7 @@ class Luz(DispositivoBase):
                 extra={"bloqueado": True, "motivo": str(e)}
             )
             print("[COMANDO-BLOQUEADO]", payload)
-            
+            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
             
     def atributos(self) -> Dict[str, Any]:
         """Retorna os atributos da luz.
@@ -293,7 +294,8 @@ class Luz(DispositivoBase):
             depois=_nome_estado(event.transition.dest),
             extra={"bloqueado": True, "motivo": "luz_desligada"},
         )
-        print("[COMANDO-BLOQUEADO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO-BLOQUEADO]", payload) 
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
 
     def _apos_transicao(self, event):
@@ -312,7 +314,8 @@ class Luz(DispositivoBase):
             return  # oculta self-loops
         
         payload = self.evento_transicao(evento=event.event.name, origem=src, destino=dst)
-        print("[TRANSIÇÃO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[TRANSIÇÃO]", payload) 
+        self._emitir(TipoEvento.TRANSICAO_ESTADO, payload) # emitir evento ao hub
         
     def _apos_comando(self, event):
         """Callback chamado após a execução de um comando.
@@ -325,7 +328,8 @@ class Luz(DispositivoBase):
             antes=_nome_estado(event.transition.source),
             depois=_nome_estado(event.transition.dest),
         )
-        print("[COMANDO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
         
 #--------------------------------------------------------------------------------------------------------------
 # Teste de uso da classe Luz
@@ -335,13 +339,13 @@ if __name__ == "__main__":
 
     print("Inicial:", luz.estado.name, "| brilho:", luz.brilho, "| cor:", luz.cor.name)
 
-    # # ligar/desligar
-    # luz.executar_comando("ligar")
-    # luz.executar_comando("desligar")
+    # ligar/desligar
+    luz.executar_comando("ligar")
+    luz.executar_comando("desligar")
 
-    # # tentar definir_brilho/cor com luz DESLIGADA (bloqueado)
-    # luz.executar_comando("definir_brilho", valor=50)
-    # luz.executar_comando("definir_cor", cor="quente")
+    # tentar definir_brilho/cor com luz DESLIGADA (bloqueado)
+    luz.executar_comando("definir_brilho", valor=50)
+    luz.executar_comando("definir_cor", cor="quente")
 
     # ligar e ajustar
     luz.executar_comando("ligar")

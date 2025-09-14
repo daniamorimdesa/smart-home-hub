@@ -19,3 +19,4 @@ class Evento:
     tipo: TipoEvento
     payload: Dict[str, Any]
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat(timespec="seconds"))
+

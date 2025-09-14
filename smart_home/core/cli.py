@@ -1,4 +1,4 @@
-# smart_home/core/cli.py: 
+# smart_home/core/cli.py: CLI interativo com Rich
 from __future__ import annotations
 
 import argparse
@@ -19,11 +19,9 @@ from smart_home.core.dispositivos import TipoDeDispositivo
 from smart_home.dispositivos.luz import CorLuz
 from smart_home.dispositivos.radio import EstacaoRadio
 
-from smart_home.core.persistencia import (
-    carregar_config,
-    salvar_config,
-    criar_dispositivos_default,  # só se você ainda usar direto em algum lugar
-)
+from pathlib import Path
+from smart_home.core.observers import ConsoleObserver, CsvObserverTransitions, CsvObserverEventos
+
 
 console = Console()
 rich_traceback(show_locals=True)
@@ -241,6 +239,7 @@ def remover_dispositivo(hub: Hub):
 # ──────────────────────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────────────────────
+
 def main():
     parser = argparse.ArgumentParser(description="Smart Home Hub (CLI)")
     parser.add_argument("--config", type=str, default="data/config.json", help="Arquivo de configuração JSON")
@@ -248,6 +247,16 @@ def main():
     cfg_path = Path(args.config)
 
     hub = Hub()
+    
+
+    # Observers
+    hub.registrar_observer(ConsoleObserver())
+    hub.registrar_observer(CsvObserverTransitions(Path("data/logs/transitions.csv")))
+    
+    # se quiser também um CSV geral:
+    hub.registrar_observer(CsvObserverEventos(Path("data/logs/events.csv")))
+    
+    
     # carrega config se existir; senão, defaults
     try:
         hub.carregar_config(cfg_path)

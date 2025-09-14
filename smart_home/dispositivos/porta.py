@@ -3,6 +3,7 @@ from enum import Enum, auto
 from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.core.eventos import TipoEvento
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA PORTA
 #--------------------------------------------------------------------------------------------------------------
@@ -108,6 +109,7 @@ class Porta(DispositivoBase):
         if comando not in mapa:
             raise ValueError(f"Comando '{comando}' não suportado para porta '{self.id}'.")
         
+        
         try:
             mapa[comando](**kwargs) # chamar o método da FSM
             
@@ -118,6 +120,7 @@ class Porta(DispositivoBase):
                 extra={"bloqueado": True, "motivo": str(e)}
             )
             print("[COMANDO-BLOQUEADO]", payload)
+            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
     def atributos(self) -> Dict[str, Any]:
         """Retorna os atributos da porta.
@@ -170,7 +173,8 @@ class Porta(DispositivoBase):
             origem=src,                                     # estado antes
             destino=dst,                                    # estado depois
         )
-        print("[TRANSIÇÃO]", payload)  # por enquanto, só console (depois mandamos ao logger)
+        print("[TRANSIÇÃO]", payload) 
+        self._emitir(TipoEvento.TRANSICAO_ESTADO, payload) # emitir evento ao hub
 
 
     def _apos_comando(self, event):
@@ -184,7 +188,8 @@ class Porta(DispositivoBase):
             antes=_nome_estado(event.transition.source), # estado antes
             depois=_nome_estado(event.transition.dest),  # estado depois
         )
-        print("[COMANDO]", payload)                      # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO]", payload)                           
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)    # emitir evento ao hub
 
 
     def _apos_comando_invalido(self, event):
@@ -199,19 +204,8 @@ class Porta(DispositivoBase):
             depois=_nome_estado(event.transition.dest),       # permanece no mesmo estado
             extra={"invalido": True, "tentativas_invalidas": self.tentativas_invalidas}, # extra info 
         )
-        print("[COMANDO-INVÁLIDO]", payload)         # por enquanto, só console (depois mandamos ao logger)
-
-
-    # def _log_comando(self, comando: str, antes: EstadoPorta, depois: EstadoPorta):
-    #     """Registra a execução de um comando.
-
-    #     Args:
-    #         comando (str): O nome do comando executado.
-    #         antes (EstadoPorta): O estado da porta antes da execução do comando.
-    #         depois (EstadoPorta): O estado da porta após a execução do comando.
-    #     """
-    #     payload = self.evento_comando(comando, _nome_estado(antes), _nome_estado(depois))   # log básico
-    #     print("[COMANDO]", payload)  # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO-INVÁLIDO]", payload)                   
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)    # emitir evento ao hub
 
 
 #--------------------------------------------------------------------------------------------------------------

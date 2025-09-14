@@ -1,4 +1,4 @@
-# smart_home/core/persistencia.py
+# smart_home/core/persistencia.py: carregar/salvar config JSON
 from __future__ import annotations
 
 import json

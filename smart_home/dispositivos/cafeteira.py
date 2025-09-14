@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from datetime import datetime
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.core.eventos import TipoEvento
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA CAFETEIRA E CONSTANTES 
 #--------------------------------------------------------------------------------------------------------------
@@ -232,6 +233,7 @@ class CafeteiraCapsulas(DispositivoBase):
                 extra={"bloqueado": True, "motivo": str(e)}
             )
             print("[COMANDO-BLOQUEADO]", payload)
+            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
     def atributos(self) -> Dict[str, Any]:
         """
@@ -277,7 +279,8 @@ class CafeteiraCapsulas(DispositivoBase):
             depois=_nome_estado(event.transition.dest),
             extra={"agua_ml": self.agua_ml, "capsulas": self.capsulas, "motivo": "sem_recurso"},
         )
-        print("[COMANDO-BLOQUEADO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO-BLOQUEADO]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
     def _comando_bloqueado(self, event) -> None:
         """Callback chamado quando um comando é bloqueado.
@@ -291,7 +294,8 @@ class CafeteiraCapsulas(DispositivoBase):
             depois=_nome_estado(event.transition.dest),
             extra={"bloqueado": True, "motivo": "comando_invalido"},
         )
-        print("[COMANDO-BLOQUEADO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO-BLOQUEADO]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
         
     def _apos_transicao(self, event):
         """Callback chamado após uma transição de estado.
@@ -309,7 +313,8 @@ class CafeteiraCapsulas(DispositivoBase):
             return  # oculta self-loops
         
         payload = self.evento_transicao(evento=event.event.name, origem=src, destino=dst)
-        print("[TRANSIÇÃO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[TRANSIÇÃO]", payload)
+        self._emitir(TipoEvento.TRANSICAO_ESTADO, payload) # emitir evento ao hub
         
     def _apos_comando(self, event):
         """Callback chamado após a execução de um comando.
@@ -322,7 +327,8 @@ class CafeteiraCapsulas(DispositivoBase):
             antes=_nome_estado(event.transition.source),
             depois=_nome_estado(event.transition.dest),
         )
-        print("[COMANDO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 #--------------------------------------------------------------------------------------------------------------
 # Teste de uso da classe Cafeteira
 #--------------------------------------------------------------------------------------------------------------

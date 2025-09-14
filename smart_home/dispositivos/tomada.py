@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.core.eventos import TipoEvento
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA TOMADA
 #--------------------------------------------------------------------------------------------------------------
@@ -125,6 +126,7 @@ class Tomada(DispositivoBase):
                 extra={"bloqueado": True, "motivo": str(e)}
             )
             print("[COMANDO-BLOQUEADO]", payload)
+            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
     
     def atributos(self) -> Dict[str, Any]:
         """Retorna os atributos da tomada.
@@ -202,7 +204,8 @@ class Tomada(DispositivoBase):
             depois=_nome_estado(event.transition.dest),
             extra={"bloqueado": True, "motivo": "transicao_redundante"},
         )
-        print("[COMANDO-BLOQUEADO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO-BLOQUEADO]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
     def _apos_transicao(self, event):
         """Callback chamado após uma transição de estado.
@@ -220,7 +223,8 @@ class Tomada(DispositivoBase):
             return  # oculta self-loops
         
         payload = self.evento_transicao(evento=event.event.name, origem=src, destino=dst)
-        print("[TRANSIÇÃO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[TRANSIÇÃO]", payload) 
+        self._emitir(TipoEvento.TRANSICAO_ESTADO, payload) # emitir evento ao hub
         
     def _apos_comando(self, event):
         """Callback chamado após a execução de um comando.
@@ -233,7 +237,8 @@ class Tomada(DispositivoBase):
             antes=_nome_estado(event.transition.source),
             depois=_nome_estado(event.transition.dest),
         )
-        print("[COMANDO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
         
 #--------------------------------------------------------------------------------------------------------------
 # Teste de uso da classe Tomada

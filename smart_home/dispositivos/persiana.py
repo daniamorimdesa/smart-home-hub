@@ -3,6 +3,7 @@ from enum import Enum, auto
 from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.core.eventos import TipoEvento
 # --------------------------------------------------------------------------------------------------
 # ESTADOS DA PERSIANA
 # --------------------------------------------------------------------------------------------------
@@ -250,6 +251,7 @@ class Persiana(DispositivoBase):
                 extra={"bloqueado": True, "motivo": str(e)},
             )
             print("[COMANDO-BLOQUEADO]", payload)  # log do comando bloqueado
+            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
     def atributos(self) -> Dict[str, Any]:
         """Retorna os atributos da persiana.
@@ -292,6 +294,7 @@ class Persiana(DispositivoBase):
             extra={"redundante": True},
         )
         print("[COMANDO-REDUNDANTE]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
     def _apos_transicao(self, event):
         src = _nome_estado(event.transition.source)
@@ -300,6 +303,7 @@ class Persiana(DispositivoBase):
             return
         payload = self.evento_transicao(evento=event.event.name, origem=src, destino=dst)
         print("[TRANSIÇÃO]", payload)
+        self._emitir(TipoEvento.TRANSICAO_ESTADO, payload) # emitir evento ao hub
 
     def _apos_comando(self, event):
         payload = self.evento_comando(
@@ -308,6 +312,7 @@ class Persiana(DispositivoBase):
             depois=_nome_estado(event.transition.dest),
         )
         print("[COMANDO]", payload)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
 
 # --------------------------------------------------------------------------------------------------
 # Teste de uso da classe Persiana

@@ -1,9 +1,11 @@
-# dispositivos.py: class Dispositivo
-from __future__ import annotations       # para hints de tipo auto-referenciados 
-from abc import ABC, abstractmethod      # para classe base abstrata
-from enum import Enum                    # para enumerações
-from dataclasses import dataclass        # para dataclass
-from typing import Any, Dict, Optional   # para hints de tipo
+# smart_home/core/dispositivos.py: class Dispositivo: base, tipos de dispositivo (Enum)
+from __future__ import annotations
+from abc import ABC, abstractmethod
+from enum import Enum
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, Callable
+
+from smart_home.core.eventos import Evento, TipoEvento
 #--------------------------------------------------------------------------------------------------
 class TipoDeDispositivo(Enum):
     
@@ -33,44 +35,40 @@ class DispositivoBase(ABC):
     - tipo: tipo do dispositivo (TipoDeDispositivo)
     - estado: estado atual (controlado pela FSM vinculada)
     - maquina: instância da máquina de estados (transitions.Machine)
+    - _emissor: função callback para emitir eventos (injetado pelo Hub)
     """
     id: str
     nome: str
     tipo: TipoDeDispositivo
     estado: Any
-    maquina: Any = None
+    maquina: Any = field(default=None, repr=False, compare=False) # não aparece no repr/eq 
+    # emissor de eventos (injetado pelo Hub)
+    _emissor: Optional[Callable[[Evento], None]] = field(default=None, repr=False, compare=False)
 
     #----------------------------------------------------------------------------------------------
     # MÉTODOS ABSTRATOS - FORÇAM IMPLEMENTAÇÃO NAS SUBCLASSES
     #----------------------------------------------------------------------------------------------
     @abstractmethod
     def executar_comando(self, comando: str, /, **kwargs: Any) -> None:
-        """
-        Executa um comando específico do dispositivo.
-        Cada subclasse deve mapear comandos para triggers/métodos da FSM.
-        """
-        raise NotImplementedError  
+        """Executa um comando (string) com argumentos opcionais."""
+        pass
 
     @abstractmethod
     def atributos(self) -> Dict[str, Any]:
-        """
-        Retorna os atributos relevantes do dispositivo
-        (ex.: brilho, cor, nível de água, volume).
-        """
-        raise NotImplementedError 
+        """Retorna os atributos do dispositivo."""
+        pass
     
-    
+    # ----------------------------------------------------------------------------------------------
+    # EMISSÃO DE EVENTOS (Observer/Logger)
     #----------------------------------------------------------------------------------------------
-    # Hooks opcionais (o Hub pode chamá-los ao ligar/desligar o sistema)
-    # NÃO são abstratos — dispositivos podem ignorá-los.
-    #----------------------------------------------------------------------------------------------
-    def ao_ligar_sistema(self) -> None:
-        """Chamado pelo Hub quando o sistema é ligado. Subclasses podem sobrescrever."""
-        return
-    #------------------------------------------------------------------
-    def ao_desligar_sistema(self) -> None:
-        """Chamado pelo Hub quando o sistema é desligado. Subclasses podem sobrescrever."""
-        return
+    def set_emissor(self, emissor: Callable[[Evento], None]) -> None:
+        """Define a função callback para emitir eventos (injetado pelo Hub)."""     
+        self._emissor = emissor
+
+    def _emitir(self, tipo: TipoEvento, payload: dict) -> None:
+        """Emite um evento (se o emissor foi definido)."""
+        if self._emissor:
+            self._emissor(Evento(tipo, payload))
 
     #----------------------------------------------------------------------------------------------
     # MÉTODOS COMPORTAMENTAIS - PODEM SER SOBRESCRITOS NAS SUBCLASSES
@@ -79,19 +77,16 @@ class DispositivoBase(ABC):
     def comandos_disponiveis(self) -> Dict[str, str]:
         """
         Opcional: lista de comandos suportados (nome -> descrição).
-        Útil para a CLI mostrar ajuda.
         """
         return {}
 
     def para_dict(self) -> Dict[str, Any]:
-        """
-        Serializa o dispositivo em dicionário (compatível com JSON de config).
-        """
+        """Serializa o dispositivo para JSON de configuração."""
         return {
             "id": self.id,
             "tipo": self.tipo.value,
             "nome": self.nome,
-            "estado": self.estado,
+            "estado": self._estado_str(),
             "atributos": self.atributos(),
         }
 
@@ -106,10 +101,12 @@ class DispositivoBase(ABC):
             raise AttributeError(f"Atributo '{chave}' não existe em {self.id}")
 
     def detalhes_str(self) -> str:
+        """Retorna uma string formatada para exibir na CLI (listar dispositivos).
+
+        Returns:
+            str: String formatada com id, tipo e estado.
         """
-        Retorna uma string formatada para exibir na CLI (listar dispositivos).
-        """
-        return f"{self.id} | {self.tipo.name} | {self.estado}"
+        return f"{self.id} | {self.tipo.name} | {self._estado_str()}"
 
     # ------------------------------------------------------------------
     # HELPERs PARA OBSERVER/LOGGER (PAYLOADS PADRÕES)
@@ -149,10 +146,8 @@ class DispositivoBase(ABC):
     # HELPERS INTERNOS
     # -------------------------------------------------------------------------
     def _estado_str(self) -> str:
-        """Converte `estado` (string ou Enum) para string para exibição/JSON."""
+        """Converte `estado` (Enum ou str) para str."""
         try:
-            # Enum -> usa o nome 
-            return self.estado.name  # type: ignore[attr-defined]
+            return self.estado.name  # se for Enum
         except AttributeError:
-            # já é string
             return str(self.estado)

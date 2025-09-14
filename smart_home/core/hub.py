@@ -43,16 +43,14 @@ class Hub:
         self.adicionar("radio", "radio_cozinha", "Rádio da Cozinha", volume=30, estacao=EstacaoRadio.MPB)
         self.adicionar("persiana", "persiana_quarto", "Persiana do Quarto", abertura=50)
         
-    
-    
-    
-    
+        
     # CRUD
     def adicionar(self, tipo: str, id: str, nome: str, **attrs: Any) -> DispositivoBase:
         if id in self.dispositivos:
             from smart_home.core.erros import DispositivoJaExiste
             raise DispositivoJaExiste(f"Ja existe dispositivo com id '{id}'.")
         disp = self._criar_dispositivo(tipo, id, nome, attrs)
+        disp.set_emissor(self._emitir)
         self.dispositivos[id] = disp
         self._emitir(Evento(TipoEvento.DISPOSITIVO_ADICIONADO, {"id": id, "tipo": tipo, "nome": nome}))
         return disp

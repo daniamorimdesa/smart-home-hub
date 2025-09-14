@@ -9,6 +9,18 @@
       "estado_nome": "TRANCADA"
     }
   },
+  "luz_sala": {
+    "id": "luz_sala",
+    "nome": "Luz da Sala",
+    "tipo": "LUZ",
+    "estado": "LIGADA",
+    "atributos": {
+      "brilho": 75,
+      "ultimo_brilho": 75,
+      "cor": "QUENTE",
+      "estado_nome": "LIGADA"
+    }
+  },
   "tomada_tv": {
     "id": "tomada_tv",
     "nome": "Tomada da TV",
@@ -55,6 +67,16 @@
     "atributos": {
       "estado_nome": "PARCIAL",
       "abertura": 50
+    }
+  },
+  "porta1": {
+    "id": "porta1",
+    "nome": "Porta de saída",
+    "tipo": "PORTA",
+    "estado": "TRANCADA",
+    "atributos": {
+      "tentativas_invalidas": 0,
+      "estado_nome": "TRANCADA"
     }
   }
 }

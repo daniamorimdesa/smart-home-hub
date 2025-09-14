@@ -3,6 +3,7 @@ from enum import Enum, auto
 from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.core.eventos import TipoEvento
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DO RÁDIO E ESTAÇÕES SUPORTADAS
 #--------------------------------------------------------------------------------------------------------------
@@ -206,6 +207,7 @@ class Radio(DispositivoBase):
                 extra={"bloqueado": True, "motivo": str(e)}
             )
             print("[COMANDO-BLOQUEADO]", payload)
+            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
         
     def atributos(self) -> Dict[str, Any]:
         """Retorna os atributos do rádio.
@@ -295,6 +297,7 @@ class Radio(DispositivoBase):
             extra={"bloqueado": True, "motivo": "radio_desligado"},
         )
         print("[COMANDO-BLOQUEADO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
         
     def _apos_transicao(self, event):
         """Callback chamado após uma transição de estado.
@@ -312,7 +315,8 @@ class Radio(DispositivoBase):
             return  # oculta self-loops
         
         payload = self.evento_transicao(evento=event.event.name, origem=src, destino=dst)
-        print("[TRANSIÇÃO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[TRANSIÇÃO]", payload)
+        self._emitir(TipoEvento.TRANSICAO_ESTADO, payload) # emitir evento ao hub
         
     def _apos_comando(self, event):
         """Callback chamado após a execução de um comando.
@@ -325,7 +329,8 @@ class Radio(DispositivoBase):
             antes=_nome_estado(event.transition.source),
             depois=_nome_estado(event.transition.dest),
         )
-        print("[COMANDO]", payload) # por enquanto, só console (depois mandamos ao logger)
+        print("[COMANDO]", payload) 
+        self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
         
 #--------------------------------------------------------------------------------------------------------------
 # Teste de uso da classe Radio
