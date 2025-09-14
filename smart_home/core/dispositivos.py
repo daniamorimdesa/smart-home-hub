@@ -1,11 +1,9 @@
 # dispositivos.py: class Dispositivo
-
 from __future__ import annotations       # para hints de tipo auto-referenciados 
 from abc import ABC, abstractmethod      # para classe base abstrata
 from enum import Enum                    # para enumerações
 from dataclasses import dataclass        # para dataclass
 from typing import Any, Dict, Optional   # para hints de tipo
-
 #--------------------------------------------------------------------------------------------------
 class TipoDeDispositivo(Enum):
     
@@ -19,7 +17,7 @@ class TipoDeDispositivo(Enum):
     # extras
     CAFETEIRA = "CAFETEIRA"
     RADIO = "RADIO"
-    PROJETOR = "PROJETOR"         
+    PERSIANA = "PERSIANA"
 
 #--------------------------------------------------------------------------------------------------
 @dataclass

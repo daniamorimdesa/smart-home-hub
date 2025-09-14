@@ -2,9 +2,7 @@
 from enum import Enum, auto
 from typing import Any, Dict
 from transitions import Machine, MachineError
-
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
-
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA LUZ E CORES SUPORTADAS
 #--------------------------------------------------------------------------------------------------------------
