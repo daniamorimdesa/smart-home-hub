@@ -27,10 +27,8 @@ def criar_dispositivos_default() -> Dict[str, Any]:
         "persiana": Persiana(id="persiana_sala", nome="Persiana da Sala", abertura_inicial=0),
     }
 
-
 def _estado_str(estado) -> str:
     return getattr(estado, "name", str(estado))
-
 
 # -------------------------
 # Salvar
@@ -75,6 +73,7 @@ def carregar_config(path: Path) -> Dict[str, Any]:
         id_ = cfg.get("id", chave)
         nome = cfg.get("nome", chave)
         attrs = cfg.get("atributos", {}) or {}
+        
 
         try:
             if tipo == TipoDeDispositivo.PORTA.value:
