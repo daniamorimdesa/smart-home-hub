@@ -1,0 +1,60 @@
+{
+  "porta_entrada": {
+    "id": "porta_entrada",
+    "nome": "Porta da Entrada",
+    "tipo": "PORTA",
+    "estado": "TRANCADA",
+    "atributos": {
+      "tentativas_invalidas": 0,
+      "estado_nome": "TRANCADA"
+    }
+  },
+  "tomada_tv": {
+    "id": "tomada_tv",
+    "nome": "Tomada da TV",
+    "tipo": "TOMADA",
+    "estado": "DESLIGADA",
+    "atributos": {
+      "potencia_w": 150,
+      "consumo_wh": 0.0,
+      "consumo_wh_total": 0.0,
+      "estado_nome": "DESLIGADA",
+      "ligada_desde": null
+    }
+  },
+  "cafeteira_cozinha": {
+    "id": "cafeteira_cozinha",
+    "nome": "Cafeteira da Cozinha",
+    "tipo": "CAFETEIRA",
+    "estado": "DESLIGADA",
+    "atributos": {
+      "estado_nome": "DESLIGADA",
+      "agua_ml": 1000,
+      "capsulas": 10,
+      "total_bebidas": 0,
+      "historico": 0
+    }
+  },
+  "radio_cozinha": {
+    "id": "radio_cozinha",
+    "nome": "Rádio da Cozinha",
+    "tipo": "RADIO",
+    "estado": "LIGADO",
+    "atributos": {
+      "estado_nome": "LIGADO",
+      "volume": 30,
+      "ultimo_volume": 30,
+      "estacao": "MPB"
+    }
+  },
+  "persiana_quarto": {
+    "id": "persiana_quarto",
+    "nome": "Persiana do Quarto",
+    "tipo": "PERSIANA",
+    "estado": "PARCIAL",
+    "atributos": {
+      "estado_nome": "PARCIAL",
+      "abertura": 50
+    }
+  }
+}
