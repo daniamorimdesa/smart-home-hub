@@ -12,11 +12,39 @@ class EstadoPersiana(Enum):
     PARCIAL = auto()
     ABERTA  = auto()
 #--------------------------------------------------------------------------------------------------------------
-# MÉTODO AUXILIAR PARA NOMES DE ESTADO
+# MÉTODOS AUXILIARES PARA NOMES DE ESTADO E LEITURA DE ARGUMENTOS
 #--------------------------------------------------------------------------------------------------------------
 def _nome_estado(x):
     """Converte estado (Enum ou str) para str."""
     return x.name if hasattr(x, "name") else str(x)
+
+def _parse_percentual(v: Any) -> int:
+    """
+    Converte valores como 50, "50", "50%", 50.0 -> int 0..100.
+    Lança ValueError se não der.
+    """
+    if isinstance(v, (int, float)):
+        p = int(v)
+    else:
+        s = str(v).strip().replace("%", "")
+        p = int(float(s))
+    if not (0 <= p <= 100):
+        raise ValueError("Percentual deve estar entre 0 e 100.")
+    return p
+
+
+def _extrair_percentual(kwargs: Dict[str, Any]) -> int:
+    """
+    Procura o percentual em múltiplas chaves: 'percentual', 'abertura', 'valor', 'percent'.
+    """
+    for k in ("percentual", "abertura", "valor", "percent"):
+        if k in kwargs and kwargs[k] is not None:
+            return _parse_percentual(kwargs[k])
+    raise ValueError("Faltou 'percentual' (ou 'abertura/valor/percent') para ajustar(percentual=...).")
+
+
+
+
 #--------------------------------------------------------------------------------------------------------------
 # CLASSE PERSIANA
 #--------------------------------------------------------------------------------------------------------------
@@ -42,9 +70,8 @@ class Persiana(DispositivoBase):
         )
         super().__init__(id=id, nome=nome, tipo=TipoDeDispositivo.PERSIANA, estado=estado_inicial)
 
-        # atributo validado
         self._abertura: int = 0
-        self.abertura = abertura_inicial  # passa pelo setter (validação)
+        self.abertura = abertura_inicial  # valida via setter
 
         # estados e transições
         estados = [EstadoPersiana.FECHADA, EstadoPersiana.PARCIAL, EstadoPersiana.ABERTA]
@@ -84,7 +111,7 @@ class Persiana(DispositivoBase):
                 "trigger": "ajustar", 
                 "source": estados, 
                 "dest": EstadoPersiana.ABERTA,
-                "conditions": "_valor_ajuste_aberta",                             # só vai para ABERTA se percentual==100
+                "conditions": "_guard_ajuste_aberta",                             # só vai para ABERTA se percentual==100
                 "before": "_aplicar_percentual",                                  # aplica o percentual
                 "after": "_apos_comando"                                          # log do comando
             },
@@ -92,7 +119,7 @@ class Persiana(DispositivoBase):
                 "trigger": "ajustar", 
                 "source": estados, 
                 "dest": EstadoPersiana.FECHADA,
-                "conditions": "_valor_ajuste_fechada",                            # só vai para FECHADA se percentual==0
+                "conditions": "_guard_ajuste_fechada",                            # só vai para FECHADA se percentual==0
                 "before": "_aplicar_percentual",                                  # aplica o percentual
                 "after": "_apos_comando"                                          # log do comando
             },
@@ -100,7 +127,7 @@ class Persiana(DispositivoBase):
                 "trigger": "ajustar", 
                 "source": estados, 
                 "dest": EstadoPersiana.PARCIAL,
-                "conditions": "_valor_ajuste_parcial",                            # só vai para PARCIAL se 1<=percentual<=99
+                "conditions": "_guard_ajuste_parcial",                            # só vai para PARCIAL se 1<=percentual<=99
                 "before": "_aplicar_percentual",                                  # aplica o percentual
                 "after": "_apos_comando"                                          # log do comando
             },
@@ -124,7 +151,6 @@ class Persiana(DispositivoBase):
     # abertura - getter e setter
     @property
     def abertura(self) -> int:
-        """Percentual de abertura da persiana (0-100)."""
         return self._abertura
 
     @abertura.setter
@@ -133,96 +159,71 @@ class Persiana(DispositivoBase):
 
         Args:
             valor (int): Percentual de abertura.
-
-        Raises:
-            ValueError: Se o valor não for um inteiro.
-            ValueError: Se o valor estiver fora do intervalo (0-100).
         """
-        try:
-            percentual = int(valor)
-        except Exception:
-            raise ValueError("Abertura deve ser inteiro (0-100).")
-        if not (0 <= percentual <= 100):
-            raise ValueError("Abertura deve estar entre 0 e 100.")
-        self._abertura = percentual # atribui o valor validado
+        self._abertura = _parse_percentual(valor)
 
     # ----------------------------------------------------------------------------------------------
     # GUARDS E AÇÕES (para ajustar)
     # ----------------------------------------------------------------------------------------------
-    def _pegar_percentual_do_evento(self, event) -> int:
-        """Extrai o percentual do evento.
 
-        Args:
-            event (Event): O evento que contém o percentual.
-
-        Raises:
-            ValueError: Se o percentual não estiver presente no evento.
-            ValueError: Se o percentual não for um inteiro.
-            ValueError: Se o percentual estiver fora do intervalo (0-100).
-
-        Returns:
-            int: O percentual extraído do evento.
-        """
-        if "percentual" not in event.kwargs:
-            raise ValueError("Faltou 'percentual' para ajustar(percentual=...).")
-        # valida aqui também para garantir erro cedo
-        valor = event.kwargs["percentual"]
-        try:
-            percentual = int(valor)
-        except Exception:
-            raise ValueError("Percentual deve ser inteiro (0-100).")
-        if not (0 <= percentual <= 100):
-            raise ValueError("Percentual deve estar entre 0 e 100.")
-        return percentual
-
-    # condições (guards)
-    def _valor_ajuste_aberta(self, event) -> bool:
-        """Verifica se o ajuste é para 100% (aberta).
-
-        Args:
-            event (Event): O evento que contém o percentual.
-
-        Returns:
-            bool: True se o ajuste for para 100%, False caso contrário.
-        """
-        return self._pegar_percentual_do_evento(event) == 100
-
-    def _valor_ajuste_fechada(self, event) -> bool:
-        """Verifica se o ajuste é para 0% (fechada).
-
-        Args:
-            event (Event): O evento que contém o percentual.
-
-        Returns:
-            bool: True se o ajuste for para 0%, False caso contrário.
-        """
-        return self._pegar_percentual_do_evento(event) == 0
-
-    def _valor_ajuste_parcial(self, event) -> bool:
-        """Verifica se o ajuste é para um valor parcial (1-99%).
-
-        Args:
-            event (Event): O evento que contém o percentual.
-
-        Returns:
-            bool: True se o ajuste for para um valor parcial, False caso contrário.
-        """
-        percentual = self._pegar_percentual_do_evento(event)
-        return 1 <= percentual <= 99
-
-    # ações (before)
     def _aplicar_percentual(self, event) -> None:
-        """Aplica o percentual extraído do evento."""
-        self.abertura = self._pegar_percentual_do_evento(event)
+        """Aplica o percentual de abertura da persiana.
+
+        Args:
+            event (Event): O evento que contém o percentual.
+        """
+        self.abertura = _extrair_percentual(event.kwargs)
 
     def _abrir_total(self, event) -> None:
-        """Abre a persiana totalmente."""
+        """Abre a persiana totalmente.
+
+        Args:
+            event (Event): O evento que contém o percentual.
+        """
         self.abertura = 100
 
     def _fechar_total(self, event) -> None:
-        """Fecha a persiana totalmente."""
+        """Fecha a persiana totalmente.
+
+        Args:
+            event (Event): O evento que contém o percentual.
+        """
         self.abertura = 0
 
+    def _guard_ajuste_aberta(self, event) -> bool:
+        """Verifica se o ajuste é para a posição aberta.
+
+        Args:
+            event (Event): O evento que contém o percentual.
+
+        Returns:
+            bool: True se o percentual for 100, False caso contrário.
+        """
+        return _extrair_percentual(event.kwargs) == 100
+
+    def _guard_ajuste_fechada(self, event) -> bool:
+        """Verifica se o ajuste é para a posição fechada.
+
+        Args:
+            event (Event): O evento que contém o percentual.
+
+        Returns:
+            bool: True se o percentual for 0, False caso contrário.
+        """
+        return _extrair_percentual(event.kwargs) == 0
+
+    def _guard_ajuste_parcial(self, event) -> bool:
+        """Verifica se o ajuste é para a posição parcial.
+
+        Args:
+            event (Event): O evento que contém o percentual.
+
+        Returns:
+            bool: True se o percentual estiver entre 1 e 99, False caso contrário.
+        """
+        p = _extrair_percentual(event.kwargs)
+        return 1 <= p <= 99
+    
     # ----------------------------------------------------------------------------------------------
     # MÉTODOS ABSTRATOS IMPLEMENTADOS
     # ----------------------------------------------------------------------------------------------
@@ -237,21 +238,25 @@ class Persiana(DispositivoBase):
             "abrir": self.abrir,
             "fechar": self.fechar,
             "ajustar": self.ajustar,
+            "abrir_parcial": self.abrir_parcial,  # atalho
         }
         
         if comando not in mapa:
             raise ValueError(f"Comando '{comando}' não suportado para persiana '{self.id}'.")
-        
+
         try:
-            mapa[comando](**kwargs)  # chamar o método da FSM
+            mapa[comando](**kwargs)  # executa o comando
             
         except MachineError as e:
             payload = self.evento_comando(
-                comando=comando, antes=_nome_estado(self.estado), depois=_nome_estado(self.estado),
+                comando=comando,
+                antes=_nome_estado(self.estado),
+                depois=_nome_estado(self.estado),
                 extra={"bloqueado": True, "motivo": str(e)},
             )
-            print("[COMANDO-BLOQUEADO]", payload)  # log do comando bloqueado
-            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload)  # emitir evento ao hub
+            print("[COMANDO-BLOQUEADO]", payload)
+            self._emitir(TipoEvento.COMANDO_EXECUTADO, payload) # emitir evento ao hub
+
 
     def atributos(self) -> Dict[str, Any]:
         """Retorna os atributos da persiana.
@@ -274,17 +279,15 @@ class Persiana(DispositivoBase):
             "abrir": "FECHADA|PARCIAL → ABERTA (abertura=100)",
             "fechar": "ABERTA|PARCIAL → FECHADA (abertura=0)",
             "ajustar": "Ajusta abertura (0-100): 0 → FECHADA, 100 → ABERTA, 1-99 → PARCIAL",
-            "abrir_parcial": "Abre parcialmente (1-99%) — atalho para ajustar",
+            "abrir_parcial": "Atalho: ajustar(percentual=1..99)",
         }
 
     # ----------------------------------------------------------------------------------------------
     # CALLBACKS / LOGGING HELPERS
     # ----------------------------------------------------------------------------------------------
     def abrir_parcial(self, percentual: int):
-        """Abre a persiana parcialmente para o percentual especificado (1-99)."""
-        if not (1 <= percentual <= 99):
-            raise ValueError("Percentual deve estar entre 1 e 99 para abrir parcialmente.")
-        self.ajustar(percentual=percentual)
+        """helper explícito para rotina/CLI: abrir_parcial(percentual)"""
+        self.ajustar(percentual=_parse_percentual(percentual))
 
     def _comando_redundante(self, event) -> None:
         payload = self.evento_comando(
