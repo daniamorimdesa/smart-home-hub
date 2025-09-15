@@ -36,6 +36,12 @@ class Hub:
     def __init__(self) -> None:
         self.dispositivos: Dict[str, DispositivoBase] = {}
         self._observers: list[Observer] = []
+        self.rotinas: dict[str, list[dict]] = {}
+
+    # injeta emissor em dispositivo recém criado/recuperado
+    def _wire(self, disp: DispositivoBase) -> DispositivoBase:
+        disp.set_emissor(lambda evt: self._emitir(evt))
+        return disp
 
     def registrar_observer(self, obs: Observer) -> None:
         self._observers.append(obs)
@@ -62,7 +68,7 @@ class Hub:
             from smart_home.core.erros import DispositivoJaExiste
             raise DispositivoJaExiste(f"Ja existe dispositivo com id '{id}'.")
         disp = self._criar_dispositivo(tipo, id, nome, attrs)
-        disp.set_emissor(self._emitir)
+        self._wire(disp)
         self.dispositivos[id] = disp
         self._emitir(Evento(TipoEvento.DISPOSITIVO_ADICIONADO, {"id": id, "tipo": tipo, "nome": nome}))
         return disp
@@ -88,6 +94,42 @@ class Hub:
         self._emitir(Evento(TipoEvento.ATRIBUTO_ALTERADO, {
             "id": id, "atributo": chave, "antes": antigo, "depois": valor
         }))
+        
+        
+        
+    # ----------- executar rotina -----------
+    def executar_rotina(self, nome: str) -> dict:
+        passos = self.rotinas.get(nome)
+        if not passos:
+            from smart_home.core.erros import ErroDeValidacao
+            raise ErroDeValidacao(f"Rotina '{nome}' nao encontrada.", detalhes={"nome": nome})
+
+        resultados = []
+        ok = 0
+        for i, passo in enumerate(passos, 1):
+            pid = passo.get("id")
+            cmd = passo.get("comando")
+            # aceita tanto 'argumentos' quanto legado 'args'
+            args = passo.get("argumentos")
+            if args is None:
+                args = passo.get("args", {})
+            args = args or {}
+            try:
+                disp = self._exigir(pid)
+                antes = getattr(disp.estado, "name", str(disp.estado))
+                disp.executar_comando(cmd, **args)
+                depois = getattr(disp.estado, "name", str(disp.estado))
+                resultados.append({"passo": i, "id": pid, "cmd": cmd, "ok": True, "antes": antes, "depois": depois})
+                ok += 1
+            except Exception as e:
+                resultados.append({"passo": i, "id": pid, "cmd": cmd, "ok": False, "erro": str(e)})
+
+        resumo = {"rotina": nome, "total": len(passos), "sucesso": ok, "falha": len(passos)-ok, "resultados": resultados}
+        # emite um evento “macro” (útil p/ CSV geral)
+        from smart_home.core.eventos import Evento, TipoEvento
+        self._emitir(Evento(TipoEvento.ROTINA_EXECUTADA, resumo))
+        return resumo
+
         
     # ---------- Fabrica/Factory ----------
     def _criar_dispositivo(self, tipo: str, id: str, nome: str, attrs: Dict[str, Any]) -> DispositivoBase:
@@ -152,105 +194,84 @@ class Hub:
     def salvar_config(self, caminho: str | Path) -> None:
         p = Path(caminho)
         p.parent.mkdir(parents=True, exist_ok=True)
-
         data = {
-            "dispositivos": [d.para_dict() for d in self.listar()]
+            "hub": {"nome": "Casa Inteligente", "versao": "1.0"},
+            "dispositivos": [
+                {
+                    "id": d.id,
+                    "tipo": d.tipo.value,
+                    "nome": d.nome,
+                    "estado": getattr(d.estado, "name", str(d.estado)),
+                    "atributos": d.atributos(),
+                } for d in self.listar()
+            ],
+            "rotinas": self.rotinas,
         }
-
-        # sempre escreve com UTF-8 e indentado
-        with p.open("w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        p.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
             
 
     def carregar_config(self, caminho: str | Path) -> None:
         p = Path(caminho)
         if not p.exists():
             raise FileNotFoundError(f"Arquivo de config nao encontrado: {caminho}")
-
         data = json.loads(p.read_text(encoding="utf-8"))
 
-        # suporta dois formatos:
-        # A) {"dispositivos": [ {...}, {...} ]}
-        # B) {"chave_ou_id": { "id": "...", "tipo": "...", ... }, ...}
-        entries = []
-        if isinstance(data, dict) and "dispositivos" in data and isinstance(data["dispositivos"], list):
+        # rotinas (normaliza "argumentos"/"args" permanecem como estão, sem validação extra)
+        rots = data.get("rotinas", {})
+        self.rotinas = {nome: list(lista) for nome, lista in rots.items() if isinstance(lista, list)} if isinstance(rots, dict) else {}
+
+        entries: list[dict] = []
+        if isinstance(data, dict) and isinstance(data.get("dispositivos"), list):
             entries = data["dispositivos"]
         elif isinstance(data, dict):
-            # dicionário mapeando chave->config
             for _, cfg in data.items():
-                if isinstance(cfg, dict) and "id" in cfg and "tipo" in cfg:
+                if isinstance(cfg, dict) and {"id", "tipo"}.issubset(cfg.keys()):
                     entries.append(cfg)
 
         self.dispositivos.clear()
 
         for cfg in entries:
-            tipo = str(cfg.get("tipo", "")).upper()
-            id_  = cfg["id"]
-            nome = cfg.get("nome", id_)
-            estado_str = str(cfg.get("estado", "")).upper()
-            attrs = cfg.get("atributos", {}) or {}
-
-            # 1) criar
-            disp = self._criar_dispositivo(tipo, id_, nome, attrs)
-
-            # 2) aplicar atributos salvos (somente persistentes, com coerções)
-            def _persistentes_por_tipo(tipo: str) -> set[str]:
-                if tipo == "PORTA":
-                    return set()
-                if tipo == "LUZ":
-                    return {"brilho", "cor", "ultimo_brilho"}
-                if tipo == "TOMADA":
-                    # _ligada_desde é interno; não persistir direto (ou parsear à parte)
-                    return {"potencia_w", "consumo_wh"}
-                if tipo == "CAFETEIRA":
-                    # ajuste conforme seus campos reais
-                    return {"agua_ml", "capsulas", "ultimo_preparo"}
-                if tipo == "RADIO":
-                    return {"volume", "estacao"}
-                if tipo == "PERSIANA":
-                    return {"abertura"}
-                return set()
-
-            # dentro do loop de cada cfg:
-            permitidos = _persistentes_por_tipo(tipo)
-            for k, v in attrs.items():
-                if k not in permitidos:
-                    continue
-                try:
-                    # coerções por tipo/campo
-                    if tipo == "LUZ" and k == "cor" and isinstance(v, str):
-                        from smart_home.dispositivos.luz import CorLuz
-                        v = CorLuz[v.upper()]
-                    if tipo == "RADIO" and k == "estacao" and isinstance(v, str):
-                        from smart_home.dispositivos.radio import EstacaoRadio
-                        v = EstacaoRadio[v.upper()]
-                    if k in {"brilho", "potencia_w", "volume", "abertura", "agua_ml", "capsulas", "ultimo_brilho"} and isinstance(v, str):
-                        v = int(v)
-                    disp.alterar_atributo(k, v)
-                except Exception:
-                    pass  # ignora atributo inválido
-
-
-            # 3) restaurar estado enum de forma segura
             try:
-                if tipo == "PORTA":
-                    disp.estado = EstadoPorta[estado_str] if estado_str else disp.estado
-                elif tipo == "LUZ":
-                    disp.estado = EstadoLuz[estado_str] if estado_str else disp.estado
-                elif tipo == "TOMADA":
-                    disp.estado = EstadoTomada[estado_str] if estado_str else disp.estado
-                elif tipo == "CAFETEIRA":
-                    disp.estado = EstadoCafeteira[estado_str] if estado_str else disp.estado
-                elif tipo == "RADIO":
-                    disp.estado = EstadoRadio[estado_str] if estado_str else disp.estado
-                elif tipo == "PERSIANA":
-                    disp.estado = EstadoPersiana[estado_str] if estado_str else disp.estado
-            except Exception:
-                # estado inválido no JSON: mantém o default da classe
-                pass
+                tipo = str(cfg.get("tipo", "")).upper()
+                id_ = cfg["id"]
+                nome = cfg.get("nome", id_)
+                estado_str = str(cfg.get("estado", "")).upper()
+                attrs = cfg.get("atributos", {}) or {}
 
-            # 4) registrar no hub
-            self.dispositivos[id_] = disp
+                disp = self._criar_dispositivo(tipo, id_, nome, attrs)
+
+                # aplicar atributos crus (validação em cada dispositivo)
+                for k, v in attrs.items():
+                    try:
+                        # ignora chave legada 'historico' (antes era quantidade; na classe é lista)
+                        if k == "historico":
+                            continue
+                        disp.alterar_atributo(k, v)
+                    except Exception:
+                        pass
+
+                # restaurar estado enum
+                try:
+                    if tipo == "PORTA" and estado_str:
+                        disp.estado = EstadoPorta.get(estado_str, disp.estado) if hasattr(EstadoPorta, 'get') else EstadoPorta[estado_str]
+                    elif tipo == "LUZ" and estado_str:
+                        disp.estado = EstadoLuz[estado_str]
+                    elif tipo == "TOMADA" and estado_str:
+                        disp.estado = EstadoTomada[estado_str]
+                    elif tipo == "CAFETEIRA" and estado_str:
+                        disp.estado = EstadoCafeteira[estado_str]
+                    elif tipo == "RADIO" and estado_str:
+                        disp.estado = EstadoRadio[estado_str]
+                    elif tipo == "PERSIANA" and estado_str:
+                        # abertura já aplicada via atributos; ainda assim tenta sincronizar enum
+                        disp.estado = EstadoPersiana[estado_str]
+                except Exception:
+                    pass
+
+                self._wire(disp)
+                self.dispositivos[id_] = disp
+            except Exception:
+                continue
 
     # ---------- Defaults ----------
     def carregar_defaults(self) -> None:

@@ -247,7 +247,7 @@ class CafeteiraCapsulas(DispositivoBase):
             "agua_ml": self.agua_ml,                     # nível atual de água
             "capsulas": self.capsulas,                   # número atual de cápsulas
             "total_bebidas": self.total_bebidas,         # total de bebidas preparadas
-            "historico": len(self.historico),            # histórico de preparos (quantidade)
+            "historico_count": len(self.historico),      # quantidade de registros no histórico
         }
 
     def comandos_disponiveis(self) -> Dict[str, str]:

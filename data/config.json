@@ -1,4 +1,8 @@
 {
+  "hub": {
+    "nome": "Casa Inteligente",
+    "versao": "1.0"
+  },
   "dispositivos": [
     {
       "id": "porta_entrada",
@@ -16,7 +20,7 @@
       "nome": "Luz da Sala",
       "estado": "LIGADA",
       "atributos": {
-        "brilho": 75,
+        "brilho": 100,
         "cor": "QUENTE",
         "estado_nome": "LIGADA"
       }
@@ -25,26 +29,26 @@
       "id": "tomada_tv",
       "tipo": "TOMADA",
       "nome": "Tomada da TV",
-      "estado": "DESLIGADA",
+      "estado": "LIGADA",
       "atributos": {
         "potencia_w": 150,
-        "consumo_wh": 7.3654,
-        "consumo_wh_total": 7.3654,
-        "estado_nome": "DESLIGADA",
-        "ligada_desde": null
+        "consumo_wh": 11.7967,
+        "consumo_wh_total": 19.0408,
+        "estado_nome": "LIGADA",
+        "ligada_desde": "14/09/2025 21:39:02"
       }
     },
     {
       "id": "cafeteira_cozinha",
       "tipo": "CAFETEIRA",
       "nome": "Cafeteira da Cozinha",
-      "estado": "PRONTA",
+      "estado": "DESLIGADA",
       "atributos": {
-        "estado_nome": "PRONTA",
+        "estado_nome": "DESLIGADA",
         "agua_ml": 1000,
         "capsulas": 10,
-        "total_bebidas": 0,
-        "historico": 0
+        "total_bebidas": 7,
+        "historico_count": 3
       }
     },
     {
@@ -54,7 +58,7 @@
       "estado": "LIGADO",
       "atributos": {
         "estado_nome": "LIGADO",
-        "volume": 30,
+        "volume": 50,
         "estacao": "MPB"
       }
     },
@@ -62,21 +66,21 @@
       "id": "persiana_quarto",
       "tipo": "PERSIANA",
       "nome": "Persiana do Quarto",
-      "estado": "PARCIAL",
+      "estado": "FECHADA",
       "atributos": {
-        "estado_nome": "PARCIAL",
-        "abertura": 50
+        "estado_nome": "FECHADA",
+        "abertura": 0
       }
     },
     {
-      "id": "luz1",
+      "id": "luz_cozinha",
       "tipo": "LUZ",
-      "nome": "Luz 1",
-      "estado": "DESLIGADA",
+      "nome": "Luz da Cozinha",
+      "estado": "LIGADA",
       "atributos": {
-        "brilho": 0,
+        "brilho": 100,
         "cor": "NEUTRA",
-        "estado_nome": "DESLIGADA"
+        "estado_nome": "LIGADA"
       }
     },
     {
@@ -88,9 +92,337 @@
         "estado_nome": "PRONTA",
         "agua_ml": 1000,
         "capsulas": 10,
-        "total_bebidas": 1,
-        "historico": 1
+        "total_bebidas": 0,
+        "historico_count": 0
       }
     }
-  ]
+  ],
+  "rotinas": {
+    "modo_noite": [
+      {
+        "id": "porta_entrada",
+        "comando": "trancar"
+      },
+      {
+        "id": "luz_sala",
+        "comando": "desligar"
+      },
+      {
+        "id": "tomada_tv",
+        "comando": "desligar"
+      },
+      {
+        "id": "luz_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "finalizar_preparo"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "ajustar",
+        "args": {
+          "percentual": 0
+        }
+      }
+    ],
+    "acordar": [
+      {
+        "id": "luz_sala",
+        "comando": "ligar",
+        "args": {
+          "brilho": 50,
+          "cor": "FRIA"
+        }
+      },
+      {
+        "id": "luz_cozinha",
+        "comando": "ligar",
+        "args": {
+          "brilho": 100,
+          "cor": "NEUTRA"
+        }
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "ligar",
+        "args": {
+          "volume": 30,
+          "estacao": "MPB"
+        }
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "ligar"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "preparar_bebida"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "finalizar_preparo"
+      },
+      {
+        "id": "tomada_tv",
+        "comando": "ligar"
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "ajustar",
+        "args": {
+          "percentual": 100
+        }
+      },
+      {
+        "id": "porta_entrada",
+        "comando": "destrancar"
+      }
+    ],
+    "chegar_casa": [
+      {
+        "id": "porta_entrada",
+        "comando": "destrancar"
+      },
+      {
+        "id": "porta_entrada",
+        "comando": "abrir"
+      },
+      {
+        "id": "luz_sala",
+        "comando": "ligar",
+        "args": {
+          "brilho": 70,
+          "cor": "QUENTE"
+        }
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "ligar",
+        "args": {
+          "volume": 25,
+          "estacao": "MPB"
+        }
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "ajustar",
+        "args": {
+          "percentual": 60
+        }
+      },
+      {
+        "id": "tomada_tv",
+        "comando": "ligar"
+      }
+    ],
+    "sair_casa": [
+      {
+        "id": "luz_sala",
+        "comando": "desligar"
+      },
+      {
+        "id": "luz_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "tomada_tv",
+        "comando": "desligar"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "finalizar_preparo"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "fechar"
+      },
+      {
+        "id": "porta_entrada",
+        "comando": "fechar"
+      },
+      {
+        "id": "porta_entrada",
+        "comando": "trancar"
+      }
+    ],
+    "cafe_manha_reforco": [
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "ligar"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "reabastecer_maquina"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "preparar_bebida"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "finalizar_preparo"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "preparar_bebida"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "finalizar_preparo"
+      }
+    ],
+    "economia_energia": [
+      {
+        "id": "luz_sala",
+        "comando": "desligar"
+      },
+      {
+        "id": "luz_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "tomada_tv",
+        "comando": "desligar"
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "ajustar",
+        "args": {
+          "percentual": 30
+        }
+      }
+    ],
+    "filme_noite": [
+      {
+        "id": "luz_sala",
+        "comando": "ligar",
+        "args": {
+          "brilho": 20,
+          "cor": "QUENTE"
+        }
+      },
+      {
+        "id": "tomada_tv",
+        "comando": "ligar"
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "desligar"
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "fechar"
+      }
+    ],
+    "limpeza_casa": [
+      {
+        "id": "luz_sala",
+        "comando": "ligar",
+        "args": {
+          "brilho": 100,
+          "cor": "FRIA"
+        }
+      },
+      {
+        "id": "luz_cozinha",
+        "comando": "ligar",
+        "args": {
+          "brilho": 100,
+          "cor": "FRIA"
+        }
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "ligar",
+        "args": {
+          "volume": 60,
+          "estacao": "JAZZ"
+        }
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "abrir"
+      }
+    ],
+    "noite_leitura": [
+      {
+        "id": "luz_sala",
+        "comando": "ligar",
+        "args": {
+          "brilho": 60,
+          "cor": "QUENTE"
+        }
+      },
+      {
+        "id": "radio_cozinha",
+        "comando": "ligar",
+        "args": {
+          "volume": 15,
+          "estacao": "CLASSICA"
+        }
+      },
+      {
+        "id": "persiana_quarto",
+        "comando": "fechar"
+      }
+    ],
+    "pausa_trabalho": [
+      {
+        "id": "radio_cozinha",
+        "comando": "ligar",
+        "args": {
+          "volume": 40,
+          "estacao": "LOFI"
+        }
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "ligar"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "preparar_bebida"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "finalizar_preparo"
+      }
+    ],
+    "manutencao_cafeteira": [
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "ligar"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "reabastecer_maquina"
+      },
+      {
+        "id": "cafeteira_cozinha",
+        "comando": "desligar"
+      }
+    ]
+  }
 }

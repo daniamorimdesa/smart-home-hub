@@ -27,6 +27,63 @@ console = Console()
 rich_traceback(show_locals=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Helpers CLI
+# ──────────────────────────────────────────────────────────────────────────────
+def listar_rotinas(hub: Hub):
+    from rich.markdown import Markdown
+    if not hub.rotinas:
+        console.print(Panel.fit("[yellow]Nenhuma rotina configurada no JSON.[/]", border_style="yellow"))
+        return
+    t = Table(title="Rotinas disponíveis", box=box.SIMPLE)
+    t.add_column("Nome", style="cyan")
+    t.add_column("Passos", justify="right")
+    for nome, passos in hub.rotinas.items():
+        t.add_row(nome, str(len(passos)))
+    console.print(t)
+
+def executar_rotina_cli(hub: Hub):
+    listar_rotinas(hub)
+    if not hub.rotinas:
+        return
+    nome = Prompt.ask("[bold]Nome da rotina[/]").strip()
+    if nome not in hub.rotinas:
+        console.print(Panel.fit(f"[red]Rotina '{nome}' não encontrada.[/]", border_style="red"))
+        return
+    from rich.progress import track
+    passos = hub.rotinas[nome]
+    # feedback visual
+    for _ in track(range(len(passos)), description=f"Executando '{nome}'..."):
+        pass  # só barra de progresso estética; execução real abaixo
+
+    try:
+        resumo = hub.executar_rotina(nome)
+        # imprime um resumo bonito
+        t = Table(title=f"Resultado — {nome}", box=box.SIMPLE_HEAVY)
+        t.add_column("#", justify="right", style="dim")
+        t.add_column("ID", style="cyan")
+        t.add_column("Comando", style="magenta")
+        t.add_column("OK?", justify="center")
+        t.add_column("Antes", style="white")
+        t.add_column("Depois", style="white")
+        t.add_column("Erro", style="red")
+        for r in resumo["resultados"]:
+            t.add_row(
+                str(r["passo"]), r["id"], r["cmd"],
+                "✅" if r["ok"] else "❌",
+                r.get("antes",""), r.get("depois",""),
+                r.get("erro",""),
+            )
+        console.print(t)
+        console.print(Panel.fit(
+            f"[bold]Total:[/] {resumo['total']}  "
+            f"[green]Sucesso:[/] {resumo['sucesso']}  "
+            f"[red]Falha:[/] {resumo['falha']}",
+            border_style="cyan"
+        ))
+    except Exception as e:
+        console.print(Panel.fit(f"[red]Erro executando rotina:[/] {e}", border_style="red"))
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Helpers visuais (Rich)
 # ──────────────────────────────────────────────────────────────────────────────
 def header():
@@ -163,12 +220,6 @@ def alterar_atributo(hub: Hub, disp):
     except Exception as e:
         console.print(Panel.fit(f"[red]Erro:[/] {e}", border_style="red"))
 
-def executar_rotina(hub: Hub):
-    console.print(Panel.fit(
-        "[bold]Rotinas[/] ainda não configuradas no JSON.\n"
-        "Sugestão: criar um arquivo com passos (id, comando, args) e eu executo 😉",
-        title="Em breve", border_style="cyan"
-    ))
 
 def gerar_relatorio(hub: Hub):
     # placeholder simpático
@@ -289,7 +340,7 @@ def main():
                 alterar_atributo(hub, disp)
 
         elif opcao == "5":
-            executar_rotina(hub)
+            executar_rotina_cli(hub)
 
         elif opcao == "6":
             gerar_relatorio(hub)
