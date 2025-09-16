@@ -5,6 +5,7 @@ from datetime import datetime
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 from smart_home.core.eventos import TipoEvento
+from smart_home.core.erros import ComandoInvalido
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA CAFETEIRA E CONSTANTES 
 #--------------------------------------------------------------------------------------------------------------
@@ -221,7 +222,10 @@ class CafeteiraCapsulas(DispositivoBase):
         }
         
         if comando not in mapa:
-            raise ValueError(f"Comando '{comando}' não suportado para cafeteira '{self.id}'.")
+            raise ComandoInvalido(
+                f"Comando '{comando}' nao suportado para cafeteira '{self.id}'.",
+                detalhes={"id": self.id, "tipo": self.tipo.value, "comando": comando}
+            )
         
         try:
             mapa[comando](**kwargs) # chamar o método da FSM

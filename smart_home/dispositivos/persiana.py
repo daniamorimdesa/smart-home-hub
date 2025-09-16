@@ -4,6 +4,7 @@ from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 from smart_home.core.eventos import TipoEvento
+from smart_home.core.erros import ComandoInvalido, AtributoInvalido
 # --------------------------------------------------------------------------------------------------
 # ESTADOS DA PERSIANA
 # --------------------------------------------------------------------------------------------------
@@ -29,7 +30,7 @@ def _parse_percentual(v: Any) -> int:
         s = str(v).strip().replace("%", "")
         p = int(float(s))
     if not (0 <= p <= 100):
-        raise ValueError("Percentual deve estar entre 0 e 100.")
+        raise AtributoInvalido("Percentual deve estar entre 0 e 100.", detalhes={"atributo": "percentual", "valor": p})
     return p
 
 
@@ -40,7 +41,7 @@ def _extrair_percentual(kwargs: Dict[str, Any]) -> int:
     for k in ("percentual", "abertura", "valor", "percent"):
         if k in kwargs and kwargs[k] is not None:
             return _parse_percentual(kwargs[k])
-    raise ValueError("Faltou 'percentual' (ou 'abertura/valor/percent') para ajustar(percentual=...).")
+    raise AtributoInvalido("Faltou 'percentual' (ou 'abertura/valor/percent') para ajustar(percentual=...).", detalhes={"atributo": "percentual"})
 
 #--------------------------------------------------------------------------------------------------------------
 # CLASSE PERSIANA
@@ -239,7 +240,7 @@ class Persiana(DispositivoBase):
         }
         
         if comando not in mapa:
-            raise ValueError(f"Comando '{comando}' não suportado para persiana '{self.id}'.")
+            raise ComandoInvalido(f"Comando '{comando}' não suportado para persiana '{self.id}'.", detalhes={"id": self.id, "comando": comando})
 
         try:
             mapa[comando](**kwargs)  # executa o comando

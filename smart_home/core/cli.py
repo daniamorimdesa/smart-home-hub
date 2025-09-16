@@ -1,17 +1,14 @@
 # smart_home/core/cli.py: CLI interativo com Rich
 from __future__ import annotations
-
 import argparse
 from pathlib import Path
 from typing import Any, Dict
-
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 from rich import box
 from rich.traceback import install as rich_traceback
-
 from smart_home.core.hub import Hub
 from smart_home.core.dispositivos import TipoDeDispositivo
 from smart_home.core.relatorios import (
@@ -26,19 +23,21 @@ from smart_home.core.relatorios import (
 # enums úteis p/ coerção de parâmetros
 from smart_home.dispositivos.luz import CorLuz
 from smart_home.dispositivos.radio import EstacaoRadio
-from smart_home.dispositivos.persiana import Persiana
-
-from pathlib import Path
-from smart_home.core.observers import ConsoleObserver, CsvObserverTransitions, CsvObserverEventos, CsvObserverComandos
-
-
-console = Console()
-rich_traceback(show_locals=True)
+from smart_home.core.observers import (
+    ConsoleObserver,
+    CsvObserverTransitions, 
+    CsvObserverEventos, 
+    CsvObserverComandos
+)
+#--------------------------------------------------------------------------------------------------
+# CRIAR CONSOLE RICH
+#--------------------------------------------------------------------------------------------------
+console = Console()              # tipo: Console
+rich_traceback(show_locals=True) # melhor rastreamento de erros
 #--------------------------------------------------------------------------------------------------
 # HELPERS CLI
 #--------------------------------------------------------------------------------------------------
 def listar_rotinas(hub: Hub):
-    from rich.markdown import Markdown
     if not hub.rotinas:
         console.print(Panel.fit("[yellow]Nenhuma rotina configurada no JSON.[/]", border_style="yellow"))
         return

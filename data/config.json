@@ -18,11 +18,11 @@
       "id": "luz_sala",
       "tipo": "LUZ",
       "nome": "Luz da Sala",
-      "estado": "DESLIGADA",
+      "estado": "LIGADA",
       "atributos": {
-        "brilho": 0,
+        "brilho": 100,
         "cor": "QUENTE",
-        "estado_nome": "DESLIGADA"
+        "estado_nome": "LIGADA"
       }
     },
     {
@@ -45,9 +45,9 @@
       "estado": "DESLIGADA",
       "atributos": {
         "estado_nome": "DESLIGADA",
-        "agua_ml": 500,
-        "capsulas": 5,
-        "total_bebidas": 13,
+        "agua_ml": 700,
+        "capsulas": 7,
+        "total_bebidas": 16,
         "historico_count": 0
       }
     },
@@ -55,10 +55,10 @@
       "id": "radio_cozinha",
       "tipo": "RADIO",
       "nome": "Rádio da Cozinha",
-      "estado": "DESLIGADO",
+      "estado": "LIGADO",
       "atributos": {
-        "estado_nome": "DESLIGADO",
-        "volume": 0,
+        "estado_nome": "LIGADO",
+        "volume": 50,
         "estacao": "LOFI"
       }
     },
@@ -66,21 +66,21 @@
       "id": "persiana_quarto",
       "tipo": "PERSIANA",
       "nome": "Persiana do Quarto",
-      "estado": "FECHADA",
+      "estado": "ABERTA",
       "atributos": {
-        "estado_nome": "FECHADA",
-        "abertura": 0
+        "estado_nome": "ABERTA",
+        "abertura": 100
       }
     },
     {
       "id": "luz_cozinha",
       "tipo": "LUZ",
       "nome": "Luz da Cozinha",
-      "estado": "DESLIGADA",
+      "estado": "LIGADA",
       "atributos": {
-        "brilho": 0,
+        "brilho": 100,
         "cor": "NEUTRA",
-        "estado_nome": "DESLIGADA"
+        "estado_nome": "LIGADA"
       }
     },
     {

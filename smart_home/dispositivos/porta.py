@@ -4,6 +4,7 @@ from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 from smart_home.core.eventos import TipoEvento
+from smart_home.core.erros import ComandoInvalido
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA PORTA
 #--------------------------------------------------------------------------------------------------------------
@@ -97,7 +98,7 @@ class Porta(DispositivoBase):
             comando (str): O comando a ser executado.
 
         Raises:
-            ValueError: Se o comando não for suportado.
+            ComandoInvalido: Se o comando não for suportado.
         """
         mapa = {
             "destrancar": self.destrancar,
@@ -107,7 +108,10 @@ class Porta(DispositivoBase):
         }
 
         if comando not in mapa:
-            raise ValueError(f"Comando '{comando}' não suportado para porta '{self.id}'.")
+            raise ComandoInvalido(
+                f"Comando '{comando}' nao suportado para porta '{self.id}'.",
+                detalhes={"id": self.id, "tipo": self.tipo.value, "comando": comando}
+            )
         
         
         try:

@@ -1,43 +1,8 @@
-"""Persistência de configuração em JSON.
-
-Este módulo agora centraliza a lógica de salvar/carregar a configuração do Hub
-em JSON. Mantém compatibilidade com o formato legado (dicionário simples onde
-cada chave era um dispositivo) por meio de funções *_legacy.
-
-Formatos suportados:
-1. Formato atual (hub):
-{
-    "hub": {"nome": "Casa Inteligente", "versao": "1.0"},
-    "dispositivos": [
-         {"id": "luz_sala", "tipo": "LUZ", "nome": "Luz da Sala", "estado": "DESLIGADA", "atributos": {...}},
-         ...
-    ],
-    "rotinas": { "rotina_manha": [ {"id": "luz_sala", "comando": "ligar"}, ... ] }
-}
-
-2. Formato legado:
-{
-    "luz": {"id": "luz_sala", "tipo": "LUZ", "estado": "DESLIGADA", "atributos": {...}},
-    "porta": { ... }
-}
-
-Ao carregar, detectamos automaticamente o formato. Ao salvar, usamos sempre o
-formato novo.
-
-Funções principais expostas:
- - salvar_config_hub(path, hub)
- - carregar_config_hub(path) -> dict {"dispositivos": {id: disp}, "rotinas": {...}}
-
-As antigas salvar_config/carregar_config foram renomeadas para preservar
-compatibilidade: salvar_config_legacy / carregar_config_legacy.
-"""
-
+# smart_home/core/persistencia.py: salvar e carregar configuração do hub em JSON
 from __future__ import annotations
-
 import json
 from pathlib import Path
 from typing import Dict, Any, Tuple
-
 from smart_home.dispositivos.porta import Porta
 from smart_home.dispositivos.luz import Luz, CorLuz
 from smart_home.dispositivos.tomada import Tomada
@@ -45,128 +10,36 @@ from smart_home.dispositivos.cafeteira import CafeteiraCapsulas
 from smart_home.dispositivos.radio import Radio, EstacaoRadio
 from smart_home.dispositivos.persiana import Persiana
 from smart_home.core.dispositivos import TipoDeDispositivo, DispositivoBase
-
-
-# -------------------------
-# Defaults (para primeiro uso)
-# -------------------------
+from smart_home.core.erros import ConfigInvalida
+#--------------------------------------------------------------------------------------------------
+# DEFAULTS DE DISPOSITIVOS (USADOS SE NÃO HOUVER ARQUIVO DE CONFIGURAÇÃO CONFIG.JSON)
+#--------------------------------------------------------------------------------------------------
 def criar_dispositivos_default() -> Dict[str, Any]:
     return {
-        "porta": Porta(id="porta_entrada", nome="Porta da Entrada"),
-        "luz": Luz(id="luz_sala", nome="Luz da Sala"),
-        "tomada": Tomada(id="tomada_bancada", nome="Tomada da Bancada", potencia_w=1000),
-        "cafeteira": CafeteiraCapsulas(id="cafeteira", nome="Cafeteira da Cozinha"),
-        "radio": Radio(id="radio_sala", nome="Rádio da Sala"),
-        "persiana": Persiana(id="persiana_sala", nome="Persiana da Sala", abertura_inicial=0),
+        "porta_entrada": Porta(id="porta_entrada", nome="Porta da Entrada"),
+        "luz_sala": Luz(id="luz_sala", nome="Luz da Sala", brilho_inicial=40, cor_inicial=CorLuz.QUENTE),
+        "tomada_tv": Tomada(id="tomada_tv", nome="Tomada da TV", potencia_w=150),
+        "cafeteira_cozinha": CafeteiraCapsulas(id="cafeteira_cozinha", nome="Cafeteira da Cozinha"),
+        "radio_cozinha": Radio(id="radio_cozinha", nome="Rádio da Cozinha", volume_inicial=50, estacao_inicial="LOFI"),
+        "persiana_quarto": Persiana(id="persiana_quarto", nome="Persiana do Quarto", abertura_inicial=0),
+        "luz_cozinha": Luz(id="luz_cozinha", nome="Luz da Cozinha", brilho_inicial=100, cor_inicial=CorLuz.NEUTRA),
+        "tomada_cozinha": Tomada(id="tomada_cozinha", nome="Tomada da Cozinha", potencia_w=500),
     }
 
 def _estado_str(estado) -> str:
+    """ Retorna representação string do estado (enum ou outro).
+    Usado para salvar estado em formato legível. """
     return getattr(estado, "name", str(estado))
 
-# -------------------------
-# Salvar
-# -------------------------
-def salvar_config_legacy(path: Path, dispositivos: Dict[str, Any]) -> None:
-    """(LEGADO) Salva configuração no formato antigo.
 
-    Formato: {"chave": {id, nome, tipo, estado, atributos}, ...}
-    Preferir `salvar_config_hub` para novas implementações.
-    """
-    data = {}
-    for chave, d in dispositivos.items():
-        data[chave] = {
-            "id": d.id,
-            "nome": d.nome,
-            "tipo": d.tipo.value,
-            "estado": _estado_str(d.estado),   # hoje só informativo; não reaplicamos no load
-            "atributos": d.atributos(),
-        }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-
-
-# -------------------------
-# Carregar
-# -------------------------
-def carregar_config_legacy(path: Path) -> Dict[str, Any]:
-    """(LEGADO) Carrega formato antigo e retorna dict de dispositivos.
-
-    Usado como fallback quando formato novo não é detectado. Em caso de erro
-    retorna defaults.
-    """
-    if not path.exists():
-        return criar_dispositivos_default()
-
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return criar_dispositivos_default()
-
-    dispositivos: Dict[str, Any] = {}
-
-    for chave, cfg in data.items():
-        tipo = (cfg.get("tipo") or "").upper()
-        id_ = cfg.get("id", chave)
-        nome = cfg.get("nome", chave)
-        attrs = cfg.get("atributos", {}) or {}
-        
-
-        try:
-            if tipo == TipoDeDispositivo.PORTA.value:
-                disp = Porta(id=id_, nome=nome)
-
-            elif tipo == TipoDeDispositivo.LUZ.value:
-                brilho = int(attrs.get("brilho", 0))
-                cor = attrs.get("cor", "NEUTRA")
-                if isinstance(cor, str):
-                    try:
-                        cor = CorLuz[cor]
-                    except Exception:
-                        cor = CorLuz.NEUTRA
-                disp = Luz(id=id_, nome=nome, brilho_inicial=brilho, cor_inicial=cor)
-
-            elif tipo == TipoDeDispositivo.TOMADA.value:
-                pot = int(attrs.get("potencia_w", 0))
-                disp = Tomada(id=id_, nome=nome, potencia_w=pot)
-
-            elif tipo == TipoDeDispositivo.CAFETEIRA.value:
-                disp = CafeteiraCapsulas(id=id_, nome=nome)
-
-            elif tipo == TipoDeDispositivo.RADIO.value:
-                est = attrs.get("estacao", "MPB")
-                if isinstance(est, str):
-                    try:
-                        est = EstacaoRadio[est]
-                    except Exception:
-                        est = EstacaoRadio.MPB
-                vol = int(attrs.get("ultimo_volume", attrs.get("volume", 0)))
-                disp = Radio(id=id_, nome=nome, volume_inicial=vol, estacao_inicial=est)
-
-            elif tipo == TipoDeDispositivo.PERSIANA.value:
-                ab = int(attrs.get("abertura", attrs.get("abertura_inicial", 0)))
-                disp = Persiana(id=id_, nome=nome, abertura_inicial=ab)
-
-            else:
-                # tipo desconhecido: ignora entrada
-                continue
-
-            dispositivos[chave] = disp
-
-        except Exception:
-            # qualquer erro ao reconstruir esse item → pula e segue
-            continue
-
-    # se nada deu certo, volta pros defaults
-    if not dispositivos:
-        dispositivos = criar_dispositivos_default()
-
-    return dispositivos
-
-# ---------------------------------------------------------------------------
-# Novo formato (Hub) - dispositivos (lista) + rotinas + metadados hub
-# ---------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+# FUNÇÕES PARA SALVAR E CARREGAR CONFIGURAÇÃO DO HUB EM JSON 
+#--------------------------------------------------------------------------------------------------
 
 def _dispositivo_para_dict(d: DispositivoBase) -> dict:
+    """ Converte um dispositivo em dict serializável para JSON.
+    Inclui somente atributos "essenciais" (id, tipo, nome, estado, atributos).
+    """
     return {
         "id": d.id,
         "tipo": d.tipo.value,
@@ -176,26 +49,38 @@ def _dispositivo_para_dict(d: DispositivoBase) -> dict:
     }
 
 def salvar_config_hub(path: Path, hub) -> None:
-    """Salva configuração completa do hub no formato atual.
+    """Salva configuração completa do hub.
 
     Args:
         path: Caminho destino.
         hub: Instância de Hub (duck-typed: precisa de listar() e rotinas).
     """
+    # criar dict de configuração
     data = {
         "hub": {"nome": "Casa Inteligente", "versao": "1.0"},
-        "dispositivos": [_dispositivo_para_dict(d) for d in hub.listar()],
-        "rotinas": hub.rotinas,
+        "dispositivos": [_dispositivo_para_dict(d) for d in hub.listar()], # lista de dicts de dispositivos 
+        "rotinas": hub.rotinas, # dict de rotinas
     }
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    # garantir que o diretório existe
+    path.parent.mkdir(parents=True, exist_ok=True) 
+    # salvar em JSON a configuração
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8") 
 
 
 def _instanciar_dispositivo(tipo: str, cfg: dict) -> DispositivoBase | None:
-    tipo_up = (tipo or "").upper()
-    id_ = cfg.get("id")
-    nome = cfg.get("nome", id_)
-    attrs = cfg.get("atributos", {}) or {}
+    """Instancia um dispositivo a partir de configuração em dict lida do arquivo.
+    Retorna None se não conseguir instanciar (tipo inválido ou erro).
+    """
+    tipo_up = (tipo or "").upper()              # normaliza tipo
+    id_ = cfg.get("id")                         # id é obrigatório
+    nome = cfg.get("nome", id_)                 # nome opcional, default = id
+    attrs = cfg.get("atributos", {}) or {}      # atributos opcionais
+    
+    # validação mínima
+    if not id_:
+        raise ConfigInvalida("Dispositivo sem 'id' na configuração.", detalhes={"id": id_, "tipo": tipo_up})
+    
+    # tentar instanciar conforme tipo
     try:
         if tipo_up == "PORTA":
             return Porta(id=id_, nome=nome)
@@ -225,8 +110,12 @@ def _instanciar_dispositivo(tipo: str, cfg: dict) -> DispositivoBase | None:
         if tipo_up == "PERSIANA":
             ab = int(attrs.get("abertura", attrs.get("abertura_inicial", 0)))
             return Persiana(id=id_, nome=nome, abertura_inicial=ab)
-    except Exception:
-        return None
+    except Exception as e:
+        # Propaga como ConfigInvalida para tratamento no loader
+        raise ConfigInvalida(
+            f"Erro instanciando dispositivo '{id_}' do tipo '{tipo_up}': {e}",
+            detalhes={"id": id_, "tipo": tipo_up, "erro": str(e)}
+        )
     return None
 
 
@@ -239,26 +128,38 @@ def carregar_config_hub(path: Path) -> Dict[str, Any]:
         "rotinas": {nome: list[passos]}
       }
     """
-    if not path.exists():
-        return {"dispositivos": carregar_config_legacy(path), "rotinas": {}}
+    if not path.exists(): # se o arquivo não existe: usar defaults
+        return {"dispositivos": criar_dispositivos_default(), "rotinas": {}}
 
-    try:
+    try: # tentar ler JSON
         data = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {"dispositivos": criar_dispositivos_default(), "rotinas": {}}
 
-    # Detectar formato: se tiver chave "dispositivos" lista -> novo formato
-    if isinstance(data, dict) and isinstance(data.get("dispositivos"), list):
+    if isinstance(data, dict) and isinstance(data.get("dispositivos"), list): 
         dispositivos: Dict[str, DispositivoBase] = {}
         entries = data.get("dispositivos", [])
         for cfg in entries:
             if not isinstance(cfg, dict):
                 continue
             tipo = cfg.get("tipo")
-            disp = _instanciar_dispositivo(tipo, cfg)
+            try:
+                disp = _instanciar_dispositivo(tipo, cfg)
+            except ConfigInvalida as e:
+                # ignorar entrada inválida mantendo comportamento tolerante
+                try:
+                    ident = cfg.get("id")
+                    info = f"id={ident}, tipo={tipo}"
+                    det = getattr(e, "detalhes", None)
+                    if det:
+                        info += f", detalhes={det}"
+                    print(f"[persistencia] Config inválida ignorada: {info} — {e}")
+                except Exception:
+                    pass
+                continue
             if not disp:
                 continue
-            # aplicar atributos crus
+            # aplicar atributos extras (se houver)
             attrs = cfg.get("atributos", {}) or {}
             for k, v in attrs.items():
                 try:
@@ -275,5 +176,5 @@ def carregar_config_hub(path: Path) -> Dict[str, Any]:
         rotinas = {k: list(v) for k, v in rotinas.items() if isinstance(v, list)}
         return {"dispositivos": dispositivos, "rotinas": rotinas}
 
-    # Caso contrário, tratar como legado
-    return {"dispositivos": carregar_config_legacy(path), "rotinas": {}}
+    # caso contrário, formato inválido/desconhecido: usar defaults
+    return {"dispositivos": criar_dispositivos_default(), "rotinas": {}}

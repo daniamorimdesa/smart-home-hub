@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 from smart_home.core.eventos import TipoEvento
+from smart_home.core.erros import ComandoInvalido, AtributoInvalido
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA TOMADA
 #--------------------------------------------------------------------------------------------------------------
@@ -41,9 +42,9 @@ class Tomada(DispositivoBase):
         try:
             potencia = int(potencia_w)
         except Exception:
-            raise ValueError("potencia_w deve ser inteiro (≥ 0).")
+            raise AtributoInvalido("potencia_w deve ser inteiro (≥ 0).", detalhes={"atributo": "potencia_w", "valor": potencia_w})
         if potencia < 0:
-            raise ValueError("potencia_w deve ser ≥ 0.")
+            raise AtributoInvalido("potencia_w deve ser ≥ 0.", detalhes={"atributo": "potencia_w", "valor": potencia})
         self._potencia_w: int = potencia
         
         # atributos de consumo
@@ -114,7 +115,7 @@ class Tomada(DispositivoBase):
         }
         
         if comando not in mapa:
-            raise ValueError(f"Comando '{comando}' não suportado para tomada '{self.id}'.")
+            raise ComandoInvalido(f"Comando '{comando}' não suportado para tomada '{self.id}'.", detalhes={"id": self.id, "comando": comando})
         
         try:
             mapa[comando](**kwargs) # chamar o método da FSM

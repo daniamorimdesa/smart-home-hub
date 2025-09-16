@@ -4,6 +4,7 @@ from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 from smart_home.core.eventos import TipoEvento
+from smart_home.core.erros import ComandoInvalido, AtributoInvalido
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DA LUZ E CORES SUPORTADAS
 #--------------------------------------------------------------------------------------------------------------
@@ -136,9 +137,9 @@ class Luz(DispositivoBase):
         try:
             intensidade = int(valor)
         except Exception:
-            raise ValueError("Brilho deve ser inteiro (0-100).")
+            raise AtributoInvalido("Brilho deve ser inteiro (0-100).", detalhes={"atributo": "brilho", "valor": valor})
         if not (0 <= intensidade <= 100):
-            raise ValueError("Brilho deve estar entre 0 e 100.")
+            raise AtributoInvalido("Brilho deve estar entre 0 e 100.", detalhes={"atributo": "brilho", "valor": intensidade})
         self._brilho = intensidade  # atualizar brilho atual
         if intensidade > 0:
             self.ultimo_brilho = intensidade  # guardar último brilho > 0
@@ -168,9 +169,9 @@ class Luz(DispositivoBase):
             try:
                 self._cor = CorLuz[cor]    # tentar converter string para Enum
             except Exception:              
-                raise ValueError("Cor inválida. Use: QUENTE, FRIA ou NEUTRA.")
+                raise AtributoInvalido("Cor inválida. Use: QUENTE, FRIA ou NEUTRA.", detalhes={"atributo": "cor", "valor": valor})
         else:
-            raise ValueError("Cor deve ser uma instância de CorLuz ou string ('QUENTE', 'FRIA', 'NEUTRA').")
+            raise AtributoInvalido("Cor deve ser uma instância de CorLuz ou string ('QUENTE', 'FRIA', 'NEUTRA').", detalhes={"atributo": "cor", "valor": valor})
 
     #--------------------------------------------------------------------------------------------------------------
     # MÉTODOS ABSTRATOS IMPLEMENTADOS
@@ -191,7 +192,7 @@ class Luz(DispositivoBase):
         }
         
         if comando not in mapa: 
-            raise ValueError(f"Comando '{comando}' não suportado para luz '{self.id}'.")
+            raise ComandoInvalido(f"Comando '{comando}' não suportado para luz '{self.id}'.", detalhes={"id": self.id, "comando": comando})
         
         try:
             mapa[comando](**kwargs)  # chamar o método da FSM
@@ -244,7 +245,7 @@ class Luz(DispositivoBase):
             ValueError: Se o valor do brilho não for válido.
         """
         if "valor" not in event.kwargs:
-            raise ValueError("Faltou 'valor' para definir_brilho(valor=...).")
+            raise AtributoInvalido("Faltou 'valor' para definir_brilho(valor=...).", detalhes={"atributo": "valor"})
         self.brilho = event.kwargs["valor"]  # valida via propriedade
 
     def _escolher_cor(self, event) -> None:
@@ -257,7 +258,7 @@ class Luz(DispositivoBase):
             ValueError: _description_
         """
         if "cor" not in event.kwargs:
-            raise ValueError("Faltou 'cor' para definir_cor(cor=...).")
+            raise AtributoInvalido("Faltou 'cor' para definir_cor(cor=...).", detalhes={"atributo": "cor"})
         self.cor = event.kwargs["cor"]  # valida via propriedade
         
           

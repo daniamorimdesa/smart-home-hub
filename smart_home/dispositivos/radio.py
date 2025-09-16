@@ -4,6 +4,7 @@ from typing import Any, Dict
 from transitions import Machine, MachineError
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 from smart_home.core.eventos import TipoEvento
+from smart_home.core.erros import ComandoInvalido, AtributoInvalido
 #--------------------------------------------------------------------------------------------------------------
 # ESTADOS DO RÁDIO E ESTAÇÕES SUPORTADAS
 #--------------------------------------------------------------------------------------------------------------
@@ -141,9 +142,9 @@ class Radio(DispositivoBase):
         try:
             volume = int(valor)
         except Exception:
-            raise ValueError("Volume deve ser inteiro (0-100).")
+            raise AtributoInvalido("Volume deve ser inteiro (0-100).", detalhes={"atributo": "volume", "valor": valor})
         if not (0 <= volume <= 100):
-            raise ValueError("Volume deve estar entre 0 e 100.")
+            raise AtributoInvalido("Volume deve estar entre 0 e 100.", detalhes={"atributo": "volume", "valor": volume})
         self._volume = volume
         if volume > 0:
             self.ultimo_volume = volume
@@ -172,9 +173,9 @@ class Radio(DispositivoBase):
                 self._estacao = EstacaoRadio[nome_estacao]
             except Exception:
                 validas = ", ".join([estacao.name for estacao in EstacaoRadio])
-                raise ValueError(f"Estação inválida. Use: {validas}.")
+                raise AtributoInvalido(f"Estação inválida. Use: {validas}.", detalhes={"atributo": "estacao", "valor": valor})
         else:
-            raise ValueError("Estação deve ser do tipo EstacaoRadio ou uma string com o nome da estação.")
+            raise AtributoInvalido("Estação deve ser do tipo EstacaoRadio ou uma string com o nome da estação.", detalhes={"atributo": "estacao", "valor": valor})
         
     #--------------------------------------------------------------------------------------------------------------
     # MÉTODOS ABSTRATOS IMPLEMENTADOS
@@ -195,7 +196,7 @@ class Radio(DispositivoBase):
         }
         
         if comando not in mapa:
-            raise ValueError(f"Comando '{comando}' não suportado para rádio '{self.id}'.")
+            raise ComandoInvalido(f"Comando '{comando}' não suportado para rádio '{self.id}'.", detalhes={"id": self.id, "comando": comando})
         
         try:
             mapa[comando](**kwargs) # chamar o método da FSM com argumentos
@@ -248,7 +249,7 @@ class Radio(DispositivoBase):
             ValueError: Se o valor não for fornecido no evento.
         """
         if "valor" not in event.kwargs:
-            raise ValueError("Faltou 'valor' para definir_volume(valor=...).")
+            raise AtributoInvalido("Faltou 'valor' para definir_volume(valor=...).", detalhes={"atributo": "valor"})
         self.volume = event.kwargs["valor"] 
 
     def _escolher_estacao(self, event) -> None:
@@ -261,7 +262,7 @@ class Radio(DispositivoBase):
             ValueError: Se a estação não for fornecida no evento.
         """
         if "estacao" not in event.kwargs:
-            raise ValueError("Faltou 'estacao' para definir_estacao(estacao=...).")
+            raise AtributoInvalido("Faltou 'estacao' para definir_estacao(estacao=...).", detalhes={"atributo": "estacao"})
         self.estacao = event.kwargs["estacao"] # aceita EstacaoRadio ou str
 
     def _restaurar_volume_ao_ligar(self, event) -> None:

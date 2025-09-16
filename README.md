@@ -1,6 +1,8 @@
 
 # Smart Home Hub
 
+![Menu Principal](images/01-menu.JPG)
+
 Sistema de automação residencial em Python demonstrando:
 - Programação Orientada a Objetos (dispositivos com FSM)
 - Máquina de estados com `transitions`
@@ -8,17 +10,6 @@ Sistema de automação residencial em Python demonstrando:
 - Programação funcional em relatórios (map/filter/reduce, comprehensions)
 - Persistência em JSON (config) e CSV (logs + relatórios)
 
----
-## 1. Estrutura Básica
-```
-smart_home/
-	core/
-		cli.py              (Interface interativa Rich)
-		hub.py              (Registro, despacho de comandos, observers)
-		relatorios.py       (Funções de relatórios funcionais)
-		relatorios_demo.py  (Script de geração batch de CSVs report_*)
-		observers.py        (Observers: transições, comandos, eventos genéricos)
-		logger.py           (CsvLogger singleton)
 	dispositivos/
 		luz.py, tomada.py, cafeteira.py, radio.py, porta.py, persiana.py
 data/
@@ -36,14 +27,17 @@ Instale dependências:
 ```bash
 pip install -r requirements.txt
 ```
-Inicie o hub (config padrão se ausente):
+
+Inicie o hub:
+```bash
+python -m smart_home.core.cli 
+```
+
+Se desejar, especifique arquivo de configuração (`data/config.json`):
 ```bash
 python -m smart_home.core.cli --config data/config.json
 ```
-Opções úteis:
-```bash
-python -m smart_home.core.cli --no-clear         # não limpar tela a cada loop
-```
+
 
 ---
 ## 3. CLI (Menu Interativo)
@@ -61,6 +55,10 @@ Menu principal:
 10 Sair
 ```
 
+Exemplo — lista de dispositivos:
+
+![Lista de dispositivos](images/02-lista-dispositivos-registrados.JPG)
+
 ### 3.1 Exemplos de Uso
 Adicionar uma luz:
 ```
@@ -72,6 +70,10 @@ Definir brilho e cor (a luz precisa estar LIGADA):
 3 → selecionar luz_sala → comando=definir_brilho → param: valor=70
 3 → selecionar luz_sala → comando=definir_cor → param: cor=QUENTE
 ```
+
+Exemplo — executar comando em dispositivo:
+
+![Executar comando](images/03-executar-comando.JPG)
 Abrir parcialmente a persiana:
 ```
 3 → persiana_quarto → comando=ajustar → param: percentual=40
@@ -83,8 +85,16 @@ Preparar café:
 3 → cafeteira_cozinha → finalizar_preparo
 ```
 
+Exemplo — escolher e executar rotina:
+
+![Escolher rotina](images/04-escolher-rotina.JPG)
+
+![Rotina executada](images/05-rotina-executada.JPG)
+
 ### 3.2 Submenu de Relatórios (opção 6)
 Relatórios disponíveis:
+
+![Gerar relatório — submenu](images/06-gerar-relatorio.JPG)
 1 Consumo por tomada (Wh)
 2 Tempo total luzes ligadas
 3 Top dispositivos mais usados
@@ -93,6 +103,10 @@ Relatórios disponíveis:
 6 Resumo agregado (combina os anteriores)
 
 Durante a geração pode-se informar período (datetime ISO) ou deixar vazio para todo histórico.
+
+Exemplo — relatório geral:
+
+![Relatório geral](images/07-relatorio-geral.JPG)
 
 ---
 ## 4. Formatos de Logs (CSV)
@@ -251,4 +265,16 @@ python -m smart_home.core.cli --config data/config.json  # usar menu
 ---
 ## 14. Contato
 Projeto acadêmico / demonstração — adapte livremente.
+
+
+---
+## 15. Galeria (Rascunhos)
+Rascunhos das máquinas e dispositivos (imagens em `images/`):
+
+![Máquinas 1](images/Máquinas_1.jpg)
+![Máquinas 2](images/Máquinas_2.jpg)
+![Máquinas 3](images/Máquinas_3.jpg)
+![Máquinas 4](images/Máquinas_4.jpg)
+![Máquinas 5](images/Máquinas_5.jpg)
+![Máquinas 6](images/Máquinas_6.jpg)
 

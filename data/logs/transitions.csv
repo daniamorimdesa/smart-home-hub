@@ -18,3 +18,17 @@ timestamp,id_dispositivo,evento,estado_origem,estado_destino
 2025-09-16T12:23:55,cafeteira_cozinha,desligar,pronta,desligada
 2025-09-16T12:34:49,luz_sala,ligar,desligada,ligada
 2025-09-16T12:35:05,luz_sala,desligar,ligada,desligada
+2025-09-16T19:35:44,cafeteira_cozinha,ligar,desligada,pronta
+2025-09-16T19:35:44,cafeteira_cozinha,preparar_bebida,pronta,preparando
+2025-09-16T19:35:44,cafeteira_cozinha,finalizar_preparo,preparando,pronta
+2025-09-16T19:35:44,cafeteira_cozinha,preparar_bebida,pronta,preparando
+2025-09-16T19:35:44,cafeteira_cozinha,finalizar_preparo,preparando,pronta
+2025-09-16T20:02:04,luz_sala,ligar,desligada,ligada
+2025-09-16T20:02:04,luz_cozinha,ligar,desligada,ligada
+2025-09-16T20:02:04,radio_cozinha,ligar,desligado,ligado
+2025-09-16T20:02:04,cafeteira_cozinha,ligar,desligada,pronta
+2025-09-16T20:02:04,cafeteira_cozinha,preparar_bebida,pronta,preparando
+2025-09-16T20:02:04,cafeteira_cozinha,finalizar_preparo,preparando,pronta
+2025-09-16T20:02:04,tomada_tv,ligar,desligada,ligada
+2025-09-16T20:02:04,persiana_quarto,ajustar,fechada,aberta
+2025-09-16T20:02:04,porta_entrada,destrancar,trancada,destrancada

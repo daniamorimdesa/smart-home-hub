@@ -13,6 +13,7 @@ from smart_home.dispositivos.cafeteira import CafeteiraCapsulas, EstadoCafeteira
 from smart_home.dispositivos.radio import Radio, EstacaoRadio, EstadoRadio
 from smart_home.dispositivos.persiana import Persiana, EstadoPersiana
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.core.erros import ErroDeValidacao
 #--------------------------------------------------------------------------------------------------
 # HUB (CAMADA DE SERVIÇO) - GERENCIA DISPOSITIVOS, COMANDOS, ATRIBUTOS, ROTINAS E OBSERVERS
 #--------------------------------------------------------------------------------------------------
@@ -34,10 +35,7 @@ class Hub:
         for obs in self._observers:
             try: obs.on_event(evt)
             except Exception: pass  # não derruba o hub
-    # defaults
-    # (definição de carregar_defaults antiga removida - duplicada mais abaixo)
-        
-        
+ 
     # CRUD
     def adicionar(self, tipo: str, id: str, nome: str, **attrs: Any) -> DispositivoBase:
         if id in self.dispositivos:
@@ -132,7 +130,8 @@ class Hub:
         if t == "PERSIANA":
             ab = int(attrs.get("abertura", attrs.get("abertura_inicial", 0)))
             return Persiana(id=id, nome=nome, abertura_inicial=ab)
-        raise ValueError(f"Tipo de dispositivo nao suportado: {tipo}")
+        # tipo não reconhecido
+        raise ErroDeValidacao(f"Tipo de dispositivo nao suportado: {t}", detalhes={"tipo": t})
 
     # ---------- Consultas ----------
     def listar(self) -> List[DispositivoBase]:
