@@ -1,52 +1,3 @@
-# smart_home/core/observers.py: observadores (Observer) do hub
-# from __future__ import annotations
-# from abc import ABC, abstractmethod
-# from typing import Iterable
-# from rich.console import Console
-# from rich.table import Table
-# from rich import box
-# from smart_home.core.eventos import Evento
-
-# class Observer(ABC):
-#     @abstractmethod
-#     def on_event(self, evt: Evento) -> None: ...
-
-# class ConsoleObserver(Observer):
-#     def __init__(self, console: Console | None = None):
-#         self.console = console or Console()
-#     def on_event(self, evt: Evento) -> None:
-#         t = Table(box=box.SIMPLE, show_header=False)
-#         t.add_row("tipo", str(evt.tipo.name))
-#         for k, v in evt.payload.items():
-#             t.add_row(str(k), str(v))
-#         t.add_row("quando", evt.timestamp)
-#         self.console.print(t)
-
-# # simples, escreve CSV com cabeçalho
-# import csv, os
-# class CsvObserver(Observer):
-#     def __init__(self, path: str = "data/eventos.csv"):
-#         self.path = path
-#         os.makedirs(os.path.dirname(path), exist_ok=True)
-#         self._ensure_header()
-#     def _ensure_header(self):
-#         if not os.path.exists(self.path) or os.path.getsize(self.path) == 0:
-#             with open(self.path, "w", newline="", encoding="utf-8") as f:
-#                 csv.writer(f).writerow(["timestamp","tipo","campo","valor"])
-#     def on_event(self, evt: Evento) -> None:
-#         with open(self.path, "a", newline="", encoding="utf-8") as f:
-#             w = csv.writer(f)
-#             if evt.payload:
-#                 for k, v in evt.payload.items():
-#                     w.writerow([evt.timestamp, evt.tipo.name, k, v])
-#             else:
-#                 w.writerow([evt.timestamp, evt.tipo.name, "", ""])
-
-
-
-
-
-
 # smart_home/core/observers.py
 from __future__ import annotations
 from abc import ABC, abstractmethod
@@ -87,23 +38,21 @@ class CsvObserverTransitions(Observer):
         CsvLogger().write_row(self.path, self.HEADERS, row)
 
 
-
-
-
 class ConsoleObserver(Observer):
     """Observer simples de console; útil para depuração."""
     def on_event(self, evt: Evento) -> None:
         # você pode trocar por "rich" aqui se quiser
         print(f"[EVENTO] {evt.tipo.name}: {evt.payload} @ {evt.timestamp}")
 
-class CsvObserverTransitions(Observer):
-    """
-    Grava somente transições (COMANDO_EXECUTADO) no CSV de transições,
-    no formato pedido: timestamp,id_dispositivo,evento,estado_origem,estado_destino
+class CsvObserverComandos(Observer):
+    """Grava somente comandos executados (COMANDO_EXECUTADO) em CSV.
+
+    Formato: timestamp,id_dispositivo,comando,estado_origem,estado_destino
+    Útil para análises adicionais separadas das transições reais.
     """
     def __init__(self, path_csv: str | Path) -> None:
         self.path = Path(path_csv)
-        self.headers = ["timestamp", "id_dispositivo", "evento", "estado_origem", "estado_destino"]
+        self.headers = ["timestamp", "id_dispositivo", "comando", "estado_origem", "estado_destino"]
         self.logger = CsvLogger()
 
     def on_event(self, evt: Evento) -> None:
@@ -113,7 +62,7 @@ class CsvObserverTransitions(Observer):
         row = {
             "timestamp": evt.timestamp,
             "id_dispositivo": p.get("id"),
-            "evento": p.get("comando"),
+            "comando": p.get("comando"),
             "estado_origem": p.get("antes"),
             "estado_destino": p.get("depois"),
         }

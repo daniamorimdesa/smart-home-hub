@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Dict
 from datetime import datetime
-
+#--------------------------------------------------------------------------------------------------
+# TIPOS DE EVENTOS REGISTRADOS PELO HUB E ENVIADOS AOS OBSERVERS REGISTRADOS
+#--------------------------------------------------------------------------------------------------
 class TipoEvento(Enum):
     DISPOSITIVO_ADICIONADO = auto()
     DISPOSITIVO_REMOVIDO   = auto()
@@ -13,6 +15,9 @@ class TipoEvento(Enum):
     TRANSICAO_ESTADO       = auto()
     ROTINA_EXECUTADA       = auto()
     ERRO                   = auto()
+#--------------------------------------------------------------------------------------------------
+# CLASSE DE EVENTO 
+#--------------------------------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class Evento:

@@ -7,6 +7,8 @@ from typing import Any, Dict, Optional, Callable
 
 from smart_home.core.eventos import Evento, TipoEvento
 #--------------------------------------------------------------------------------------------------
+# TIPOS DE DISPOSITIVOS
+#--------------------------------------------------------------------------------------------------
 class TipoDeDispositivo(Enum):
     
     """Tipos de dispositivos suportados (valores usados no JSON)."""
@@ -21,6 +23,8 @@ class TipoDeDispositivo(Enum):
     RADIO = "RADIO"
     PERSIANA = "PERSIANA"
 
+#--------------------------------------------------------------------------------------------------
+# CLASSE BASE DE DISPOSITIVO
 #--------------------------------------------------------------------------------------------------
 @dataclass
 class DispositivoBase(ABC):

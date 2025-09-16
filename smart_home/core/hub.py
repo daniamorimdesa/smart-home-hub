@@ -1,14 +1,11 @@
-# smart_home/core/hub.py
+# smart_home/core/hub.py: gerenciamento dos dispositivos e observadores
 from __future__ import annotations
 from typing import Dict, Any, List, Optional
 import json
 from pathlib import Path
-
 from smart_home.core.eventos import Evento, TipoEvento
 from smart_home.core.observers import Observer
 from smart_home.core.persistencia import carregar_config as _load_cfg, salvar_config as _save_cfg
-
-
 from smart_home.dispositivos.porta import Porta, EstadoPorta
 from smart_home.dispositivos.luz import Luz, CorLuz, EstadoLuz
 from smart_home.dispositivos.tomada import Tomada, EstadoTomada
@@ -16,22 +13,40 @@ from smart_home.dispositivos.cafeteira import CafeteiraCapsulas, EstadoCafeteira
 from smart_home.dispositivos.radio import Radio, EstacaoRadio, EstadoRadio
 from smart_home.dispositivos.persiana import Persiana, EstadoPersiana
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
-
+#--------------------------------------------------------------------------------------------------
+# MÉTODOS AUXILIARES
+#--------------------------------------------------------------------------------------------------
 
 def _json_default(o):
-    # para Enums como EstadoX e TipoDeDispositivo
+    """Converte um objeto em um formato JSON serializável.
+
+    Args:
+        o (Any): O objeto a ser convertido.
+
+    Returns:
+        Any: O objeto convertido em um formato JSON serializável.
+    """
     try:
         return o.name
     except AttributeError:
         # fallback para qualquer outro objeto não serializável
         return str(o)
 
+
 def _estado_str(estado) -> str:
+    """Converte o estado de um dispositivo em uma representação de string.
+
+    Args:
+        estado (Union[EstadoPorta, EstadoLuz, EstadoTomada, EstadoCafeteira, EstadoRadio, EstadoPersiana]): O estado do dispositivo.
+
+    Returns:
+        str: A representação em string do estado.
+    """
     return getattr(estado, "name", str(estado))
 
-# -------------------------
-# Hub (camada de serviço)
-# -------------------------
+#--------------------------------------------------------------------------------------------------
+# HUB (CAMADA DE SERVIÇO) - GERENCIA DISPOSITIVOS, COMANDOS, ATRIBUTOS, ROTINAS E OBSERVERS
+#--------------------------------------------------------------------------------------------------
 class Hub:
     def __init__(self) -> None:
         self.dispositivos: Dict[str, DispositivoBase] = {}
