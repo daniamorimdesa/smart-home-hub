@@ -42,9 +42,6 @@ def _extrair_percentual(kwargs: Dict[str, Any]) -> int:
             return _parse_percentual(kwargs[k])
     raise ValueError("Faltou 'percentual' (ou 'abertura/valor/percent') para ajustar(percentual=...).")
 
-
-
-
 #--------------------------------------------------------------------------------------------------------------
 # CLASSE PERSIANA
 #--------------------------------------------------------------------------------------------------------------

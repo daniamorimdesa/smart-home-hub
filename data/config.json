@@ -18,37 +18,37 @@
       "id": "luz_sala",
       "tipo": "LUZ",
       "nome": "Luz da Sala",
-      "estado": "LIGADA",
+      "estado": "DESLIGADA",
       "atributos": {
-        "brilho": 100,
+        "brilho": 0,
         "cor": "QUENTE",
-        "estado_nome": "LIGADA"
+        "estado_nome": "DESLIGADA"
       }
     },
     {
       "id": "tomada_tv",
       "tipo": "TOMADA",
       "nome": "Tomada da TV",
-      "estado": "LIGADA",
+      "estado": "DESLIGADA",
       "atributos": {
         "potencia_w": 150,
         "consumo_wh": 11.7967,
-        "consumo_wh_total": 19.0408,
-        "estado_nome": "LIGADA",
-        "ligada_desde": "14/09/2025 21:39:02"
+        "consumo_wh_total": 11.7967,
+        "estado_nome": "DESLIGADA",
+        "ligada_desde": null
       }
     },
     {
       "id": "cafeteira_cozinha",
       "tipo": "CAFETEIRA",
       "nome": "Cafeteira da Cozinha",
-      "estado": "DESLIGADA",
+      "estado": "PRONTA",
       "atributos": {
-        "estado_nome": "DESLIGADA",
-        "agua_ml": 1000,
-        "capsulas": 10,
-        "total_bebidas": 7,
-        "historico_count": 3
+        "estado_nome": "PRONTA",
+        "agua_ml": 500,
+        "capsulas": 5,
+        "total_bebidas": 13,
+        "historico_count": 2
       }
     },
     {
@@ -58,8 +58,8 @@
       "estado": "LIGADO",
       "atributos": {
         "estado_nome": "LIGADO",
-        "volume": 50,
-        "estacao": "MPB"
+        "volume": 65,
+        "estacao": "LOFI"
       }
     },
     {
@@ -76,24 +76,24 @@
       "id": "luz_cozinha",
       "tipo": "LUZ",
       "nome": "Luz da Cozinha",
-      "estado": "LIGADA",
+      "estado": "DESLIGADA",
       "atributos": {
-        "brilho": 100,
+        "brilho": 0,
         "cor": "NEUTRA",
-        "estado_nome": "LIGADA"
+        "estado_nome": "DESLIGADA"
       }
     },
     {
-      "id": "cafe",
-      "tipo": "CAFETEIRA",
-      "nome": "cafeteira1",
-      "estado": "PRONTA",
+      "id": "tomada_cozinha",
+      "tipo": "TOMADA",
+      "nome": "Tomada da Cozinha",
+      "estado": "DESLIGADA",
       "atributos": {
-        "estado_nome": "PRONTA",
-        "agua_ml": 1000,
-        "capsulas": 10,
-        "total_bebidas": 0,
-        "historico_count": 0
+        "potencia_w": 500,
+        "consumo_wh": 0.0,
+        "consumo_wh_total": 0.0,
+        "estado_nome": "DESLIGADA",
+        "ligada_desde": null
       }
     }
   ],
