@@ -16,7 +16,7 @@ class Observer(ABC):
 
 class CsvObserverTransitions(Observer):
     """
-    Escreve SOMENTE transições de estado em CSV com as colunas do enunciado:
+    Escreve as transições de estado em CSV com as colunas do enunciado:
     timestamp,id_dispositivo,evento,estado_origem,estado_destino
     """
     HEADERS = ["timestamp", "id_dispositivo", "evento", "estado_origem", "estado_destino"]

@@ -42,23 +42,23 @@
       "id": "cafeteira_cozinha",
       "tipo": "CAFETEIRA",
       "nome": "Cafeteira da Cozinha",
-      "estado": "PRONTA",
+      "estado": "DESLIGADA",
       "atributos": {
-        "estado_nome": "PRONTA",
+        "estado_nome": "DESLIGADA",
         "agua_ml": 500,
         "capsulas": 5,
         "total_bebidas": 13,
-        "historico_count": 2
+        "historico_count": 0
       }
     },
     {
       "id": "radio_cozinha",
       "tipo": "RADIO",
       "nome": "Rádio da Cozinha",
-      "estado": "LIGADO",
+      "estado": "DESLIGADO",
       "atributos": {
-        "estado_nome": "LIGADO",
-        "volume": 65,
+        "estado_nome": "DESLIGADO",
+        "volume": 0,
         "estacao": "LOFI"
       }
     },

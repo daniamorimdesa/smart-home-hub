@@ -20,3 +20,15 @@ timestamp,id_dispositivo,comando,estado_origem,estado_destino
 2025-09-15T22:47:18,cafeteira_cozinha,ligar,DESLIGADA,PRONTA
 2025-09-15T22:47:18,cafeteira_cozinha,preparar_bebida,PRONTA,PREPARANDO
 2025-09-15T22:47:18,cafeteira_cozinha,finalizar_preparo,PREPARANDO,PRONTA
+2025-09-16T07:51:10,porta_entrada,abrir,TRANCADA,TRANCADA
+2025-09-16T07:52:54,porta_entrada,destrancar,TRANCADA,DESTRANCADA
+2025-09-16T12:23:55,porta_entrada,trancar,DESTRANCADA,TRANCADA
+2025-09-16T12:23:55,luz_sala,desligar,DESLIGADA,DESLIGADA
+2025-09-16T12:23:55,tomada_tv,desligar,DESLIGADA,DESLIGADA
+2025-09-16T12:23:55,luz_cozinha,desligar,DESLIGADA,DESLIGADA
+2025-09-16T12:23:55,radio_cozinha,desligar,LIGADO,DESLIGADO
+2025-09-16T12:23:55,cafeteira_cozinha,finalizar_preparo,PRONTA,PRONTA
+2025-09-16T12:23:55,cafeteira_cozinha,desligar,PRONTA,DESLIGADA
+2025-09-16T12:23:55,persiana_quarto,ajustar,FECHADA,FECHADA
+2025-09-16T12:34:49,luz_sala,ligar,DESLIGADA,LIGADA
+2025-09-16T12:35:05,luz_sala,desligar,LIGADA,DESLIGADA

@@ -14,37 +14,6 @@ from smart_home.dispositivos.radio import Radio, EstacaoRadio, EstadoRadio
 from smart_home.dispositivos.persiana import Persiana, EstadoPersiana
 from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
 #--------------------------------------------------------------------------------------------------
-# MÉTODOS AUXILIARES
-#--------------------------------------------------------------------------------------------------
-
-def _json_default(o):
-    """Converte um objeto em um formato JSON serializável.
-
-    Args:
-        o (Any): O objeto a ser convertido.
-
-    Returns:
-        Any: O objeto convertido em um formato JSON serializável.
-    """
-    try:
-        return o.name
-    except AttributeError:
-        # fallback para qualquer outro objeto não serializável
-        return str(o)
-
-
-def _estado_str(estado) -> str:
-    """Converte o estado de um dispositivo em uma representação de string.
-
-    Args:
-        estado (Union[EstadoPorta, EstadoLuz, EstadoTomada, EstadoCafeteira, EstadoRadio, EstadoPersiana]): O estado do dispositivo.
-
-    Returns:
-        str: A representação em string do estado.
-    """
-    return getattr(estado, "name", str(estado))
-
-#--------------------------------------------------------------------------------------------------
 # HUB (CAMADA DE SERVIÇO) - GERENCIA DISPOSITIVOS, COMANDOS, ATRIBUTOS, ROTINAS E OBSERVERS
 #--------------------------------------------------------------------------------------------------
 class Hub:
@@ -66,15 +35,7 @@ class Hub:
             try: obs.on_event(evt)
             except Exception: pass  # não derruba o hub
     # defaults
-    def carregar_defaults(self) -> None:
-        """Carrega uma configuração default, com alguns dispositivos."""
-        self.dispositivos.clear()
-        self.adicionar("porta", "porta_entrada", "Porta da Entrada")
-        self.adicionar("luz", "luz_sala", "Luz da Sala", brilho=75, cor=CorLuz.QUENTE)
-        self.adicionar("tomada", "tomada_tv", "Tomada da TV", potencia_w=150)
-        self.adicionar("cafeteira", "cafeteira_cozinha", "Cafeteira da Cozinha")
-        self.adicionar("radio", "radio_cozinha", "Rádio da Cozinha", volume=30, estacao=EstacaoRadio.MPB)
-        self.adicionar("persiana", "persiana_quarto", "Persiana do Quarto", abertura=50)
+    # (definição de carregar_defaults antiga removida - duplicada mais abaixo)
         
         
     # CRUD
@@ -189,22 +150,7 @@ class Hub:
 
     # ---------- Persistência (wrappers para persistencia.py) ----------
 
-    def _attrs_persistentes(self, disp) -> dict:
-        tipo = disp.tipo.value
-        base = disp.atributos()
-
-        permitidos = {
-            "PORTA": set(),
-            "LUZ": {"brilho", "cor", "ultimo_brilho"},
-            "TOMADA": {"potencia_w", "consumo_wh"},
-            "CAFETEIRA": {"agua_ml", "capsulas", "ultimo_preparo"},
-            "RADIO": {"volume", "estacao"},
-            "PERSIANA": {"abertura"},
-        }.get(tipo, set())
-
-        # remove derivados comuns
-        derivados = {"estado_nome", "consumo_wh_total", "ligada_desde"}
-        return {k: v for k, v in base.items() if k in permitidos and k not in derivados}
+    # (_attrs_persistentes removido - não utilizado)
 
     def salvar_config(self, caminho: str | Path) -> None:
         p = Path(caminho)

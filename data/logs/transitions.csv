@@ -12,3 +12,9 @@ timestamp,id_dispositivo,evento,estado_origem,estado_destino
 2025-09-15T22:47:18,cafeteira_cozinha,ligar,desligada,pronta
 2025-09-15T22:47:18,cafeteira_cozinha,preparar_bebida,pronta,preparando
 2025-09-15T22:47:18,cafeteira_cozinha,finalizar_preparo,preparando,pronta
+2025-09-16T07:52:54,porta_entrada,destrancar,trancada,destrancada
+2025-09-16T12:23:55,porta_entrada,trancar,destrancada,trancada
+2025-09-16T12:23:55,radio_cozinha,desligar,ligado,desligado
+2025-09-16T12:23:55,cafeteira_cozinha,desligar,pronta,desligada
+2025-09-16T12:34:49,luz_sala,ligar,desligada,ligada
+2025-09-16T12:35:05,luz_sala,desligar,ligada,desligada
