@@ -1,26 +1,15 @@
-"""Utilitário de logging em CSV.
-
-Este módulo expõe apenas `CsvLogger`, usado pelos observers em
-`smart_home.core.observers` para registrar:
- - transições de estado (arquivo transitions.csv)
- - comandos e demais eventos (arquivo events.csv)
-
-Removido código legado/facade não utilizado (`LoggerCSV`) para simplificar.
-Se no futuro for necessário um wrapper de alto nível para relatórios ou
-agregações, crie um módulo separado (ex.: `relatorios_export.py`) em vez de
-reacoplar aqui.
-"""
-
+# smart_home/core/logger.py: singleton para logging CSV
 from __future__ import annotations
-
 import csv
 from pathlib import Path
 from threading import Lock
 from typing import Iterable, Mapping, Any
-
+#--------------------------------------------------------------------------------------------------
+# LOGGER CSV (SINGLETON) PARA ESCRITA DE LINHAS EM CSV EVITANDO CONCORRÊNCIA
+#--------------------------------------------------------------------------------------------------
 
 class CsvLogger:
-    """Singleton minimalista para escrever linhas em CSV (com cabeçalho automático)."""
+    """Singleton para escrever linhas em CSV (com cabeçalho automático)."""
     _instance: "CsvLogger | None" = None
     _lock = Lock()
 

@@ -1,19 +1,21 @@
-# smart_home/core/observers.py
+# smart_home/core/observers.py: observers para o hub 
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict
-
 from smart_home.core.eventos import Evento, TipoEvento
 from smart_home.core.logger import CsvLogger
-
-
+#--------------------------------------------------------------------------------------------------
+# CLASSE BASE PARA OBSERVERS (PADRÃO OBSERVER)
+#--------------------------------------------------------------------------------------------------
 class Observer(ABC):
     @abstractmethod
     def on_event(self, evt: Evento) -> None:
         pass
 
-
+#--------------------------------------------------------------------------------------------------
+#  OBSERVER PARA GRAVAR TRANSIÇÕES DE ESTADO EM CSV
+#--------------------------------------------------------------------------------------------------
 class CsvObserverTransitions(Observer):
     """
     Escreve as transições de estado em CSV com as colunas do enunciado:
@@ -37,13 +39,18 @@ class CsvObserverTransitions(Observer):
         }
         CsvLogger().write_row(self.path, self.HEADERS, row)
 
-
+#--------------------------------------------------------------------------------------------------
+# OBSERVER SIMPLES DE CONSOLE
+#--------------------------------------------------------------------------------------------------
 class ConsoleObserver(Observer):
     """Observer simples de console; útil para depuração."""
     def on_event(self, evt: Evento) -> None:
         # você pode trocar por "rich" aqui se quiser
         print(f"[EVENTO] {evt.tipo.name}: {evt.payload} @ {evt.timestamp}")
 
+#--------------------------------------------------------------------------------------------------
+# OBSERVER PARA GRAVAR COMANDOS EXECUTADOS EM CSV
+#--------------------------------------------------------------------------------------------------
 class CsvObserverComandos(Observer):
     """Grava somente comandos executados (COMANDO_EXECUTADO) em CSV.
 
@@ -68,6 +75,9 @@ class CsvObserverComandos(Observer):
         }
         self.logger.write_row(self.path, self.headers, row)
 
+#--------------------------------------------------------------------------------------------------
+# OBSERVER PARA GRAVAR TODOS OS EVENTOS EM CSV
+#--------------------------------------------------------------------------------------------------
 class CsvObserverEventos(Observer):
     """
     (Opcional) Joga TODOS os eventos num CSV geral.

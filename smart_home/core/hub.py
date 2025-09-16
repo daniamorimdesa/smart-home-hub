@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from smart_home.core.eventos import Evento, TipoEvento
 from smart_home.core.observers import Observer
-from smart_home.core.persistencia import carregar_config as _load_cfg, salvar_config as _save_cfg
+from smart_home.core.persistencia import salvar_config_hub, carregar_config_hub
 from smart_home.dispositivos.porta import Porta, EstadoPorta
 from smart_home.dispositivos.luz import Luz, CorLuz, EstadoLuz
 from smart_home.dispositivos.tomada import Tomada, EstadoTomada
@@ -153,86 +153,27 @@ class Hub:
     # (_attrs_persistentes removido - não utilizado)
 
     def salvar_config(self, caminho: str | Path) -> None:
-        p = Path(caminho)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        data = {
-            "hub": {"nome": "Casa Inteligente", "versao": "1.0"},
-            "dispositivos": [
-                {
-                    "id": d.id,
-                    "tipo": d.tipo.value,
-                    "nome": d.nome,
-                    "estado": getattr(d.estado, "name", str(d.estado)),
-                    "atributos": d.atributos(),
-                } for d in self.listar()
-            ],
-            "rotinas": self.rotinas,
-        }
-        p.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        """Salva configuração delegando ao módulo de persistência.
+
+        Mantida a assinatura pública para compatibilidade.
+        """
+        salvar_config_hub(Path(caminho), self)
             
 
     def carregar_config(self, caminho: str | Path) -> None:
-        p = Path(caminho)
-        if not p.exists():
-            raise FileNotFoundError(f"Arquivo de config nao encontrado: {caminho}")
-        data = json.loads(p.read_text(encoding="utf-8"))
+        """Carrega configuração delegando ao módulo de persistência.
 
-        # rotinas (normaliza "argumentos"/"args" permanecem como estão, sem validação extra)
-        rots = data.get("rotinas", {})
-        self.rotinas = {nome: list(lista) for nome, lista in rots.items() if isinstance(lista, list)} if isinstance(rots, dict) else {}
-
-        entries: list[dict] = []
-        if isinstance(data, dict) and isinstance(data.get("dispositivos"), list):
-            entries = data["dispositivos"]
-        elif isinstance(data, dict):
-            for _, cfg in data.items():
-                if isinstance(cfg, dict) and {"id", "tipo"}.issubset(cfg.keys()):
-                    entries.append(cfg)
-
+        Aceita tanto formato novo quanto legado (auto-detect no módulo).
+        """
+        resultado = carregar_config_hub(Path(caminho))
+        dispositivos = resultado.get("dispositivos", {})
+        rotinas = resultado.get("rotinas", {})
         self.dispositivos.clear()
-
-        for cfg in entries:
-            try:
-                tipo = str(cfg.get("tipo", "")).upper()
-                id_ = cfg["id"]
-                nome = cfg.get("nome", id_)
-                estado_str = str(cfg.get("estado", "")).upper()
-                attrs = cfg.get("atributos", {}) or {}
-
-                disp = self._criar_dispositivo(tipo, id_, nome, attrs)
-
-                # aplicar atributos crus (validação em cada dispositivo)
-                for k, v in attrs.items():
-                    try:
-                        # ignora chave legada 'historico' (antes era quantidade; na classe é lista)
-                        if k == "historico":
-                            continue
-                        disp.alterar_atributo(k, v)
-                    except Exception:
-                        pass
-
-                # restaurar estado enum
-                try:
-                    if tipo == "PORTA" and estado_str:
-                        disp.estado = EstadoPorta.get(estado_str, disp.estado) if hasattr(EstadoPorta, 'get') else EstadoPorta[estado_str]
-                    elif tipo == "LUZ" and estado_str:
-                        disp.estado = EstadoLuz[estado_str]
-                    elif tipo == "TOMADA" and estado_str:
-                        disp.estado = EstadoTomada[estado_str]
-                    elif tipo == "CAFETEIRA" and estado_str:
-                        disp.estado = EstadoCafeteira[estado_str]
-                    elif tipo == "RADIO" and estado_str:
-                        disp.estado = EstadoRadio[estado_str]
-                    elif tipo == "PERSIANA" and estado_str:
-                        # abertura já aplicada via atributos; ainda assim tenta sincronizar enum
-                        disp.estado = EstadoPersiana[estado_str]
-                except Exception:
-                    pass
-
-                self._wire(disp)
-                self.dispositivos[id_] = disp
-            except Exception:
-                continue
+        for disp in dispositivos.values():
+            self._wire(disp)
+            self.dispositivos[disp.id] = disp
+        # rotinas já normalizadas
+        self.rotinas = rotinas
 
     # ---------- Defaults ----------
     def carregar_defaults(self) -> None:
