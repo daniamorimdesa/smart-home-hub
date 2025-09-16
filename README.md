@@ -1,5 +1,5 @@
 
-﻿# Smart Home Hub
+# Smart Home Hub
 
 Sistema de automação residencial em Python demonstrando:
 - Programação Orientada a Objetos (dispositivos com FSM)
