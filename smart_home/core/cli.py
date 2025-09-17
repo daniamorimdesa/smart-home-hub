@@ -29,15 +29,20 @@ from smart_home.core.observers import (
     CsvObserverEventos, 
     CsvObserverComandos
 )
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 # CRIAR CONSOLE RICH
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 console = Console()              # tipo: Console
 rich_traceback(show_locals=True) # melhor rastreamento de erros
-#--------------------------------------------------------------------------------------------------
-# HELPERS CLI
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
+# HELPERS CLI PARA LISTAR/EXECUTAR ROTINAS
+#--------------------------------------------------------------------------------------------------------------------------------------------
 def listar_rotinas(hub: Hub):
+    """Lista rotinas disponíveis no hub.
+
+    Args:
+        hub (Hub): Instância do hub de automação.
+    """
     if not hub.rotinas:
         console.print(Panel.fit("[yellow]Nenhuma rotina configurada no JSON.[/]", border_style="yellow"))
         return
@@ -49,6 +54,11 @@ def listar_rotinas(hub: Hub):
     console.print(t)
 
 def executar_rotina_cli(hub: Hub):
+    """Executa uma rotina selecionada pelo usuário.
+
+    Args:
+        hub (Hub): Instância do hub de automação.
+    """
     listar_rotinas(hub)
     if not hub.rotinas:
         return
@@ -58,6 +68,7 @@ def executar_rotina_cli(hub: Hub):
         return
     from rich.progress import track
     passos = hub.rotinas[nome]
+    
     # feedback visual
     for _ in track(range(len(passos)), description=f"Executando '{nome}'..."):
         pass  # só barra de progresso estética; execução real abaixo
@@ -89,16 +100,32 @@ def executar_rotina_cli(hub: Hub):
         ))
     except Exception as e:
         console.print(Panel.fit(f"[red]Erro executando rotina:[/] {e}", border_style="red"))
-#--------------------------------------------------------------------------------------------------
+        
+#--------------------------------------------------------------------------------------------------------------------------------------------
 # HELPERS VISUAIS (RICH)
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 def header():
+    """Exibe o cabeçalho do Hub"""
     console.rule("[italic bright_white]Smart Home Hub[/]")
 
 def _estado_str(estado) -> str:
+    """Converte o estado do dispositivo em uma string legível.
+
+    Args:
+        estado (Any): O estado do dispositivo.
+
+    Returns:
+        str: A representação em string do estado.
+    """
     return getattr(estado, "name", str(estado))
 
+
 def listar_dispositivos(hub: Hub):
+    """Lista dispositivos registrados no hub.
+
+    Args:
+        hub (Hub): Instância do hub de automação.
+    """
     t = Table(title="Dispositivos Registrados", box=box.SIMPLE_HEAVY)
     t.add_column("ID", style="cyan", no_wrap=True)
     t.add_column("Nome", style="bold")
@@ -107,8 +134,17 @@ def listar_dispositivos(hub: Hub):
     for d in hub.listar():
         t.add_row(d.id, d.nome, d.tipo.value, _estado_str(d.estado))
     console.print(t)
+    
 
 def escolher_dispositivo(hub: Hub):
+    """Permite ao usuário escolher um dispositivo da lista.
+
+    Args:
+        hub (Hub): Instância do hub de automação.
+
+    Returns:
+        Dispositivo | None: O dispositivo escolhido ou None se não encontrado.
+    """
     listar_dispositivos(hub)
     id_ = Prompt.ask("\n[bold]ID do dispositivo[/]", default="").strip()
     disp = hub.obter(id_)
@@ -116,7 +152,13 @@ def escolher_dispositivo(hub: Hub):
         console.print(":warning: [yellow]Dispositivo não encontrado.[/]")
     return disp
 
+
 def mostrar_atributos(disp):
+    """Exibe os atributos do dispositivo.
+
+    Args:
+        disp (Dispositivo): O dispositivo cujos atributos serão exibidos.
+    """
     attrs = disp.atributos()
     t = Table(title=f"Atributos — {disp.nome}", box=box.SIMPLE)
     t.add_column("Atributo", style="cyan")
@@ -126,6 +168,11 @@ def mostrar_atributos(disp):
     console.print(t)
 
 def mostrar_comandos(disp):
+    """Exibe os comandos disponíveis para o dispositivo.
+
+    Args:
+        disp (Dispositivo): O dispositivo cujos comandos serão exibidos.
+    """
     cmds = disp.comandos_disponiveis()
     t = Table(title=f"Comandos — {disp.nome}", box=box.MINIMAL_DOUBLE_HEAD)
     t.add_column("Comando", style="cyan", no_wrap=True)
@@ -135,6 +182,7 @@ def mostrar_comandos(disp):
     console.print(t)
 
 def mostrar_menu():
+    """Exibe o menu principal do sistema"""
     grid = Table.grid(padding=1)
     grid.add_column(justify="right", style="cyan", no_wrap=True)
     grid.add_column(style="white")
@@ -154,16 +202,33 @@ def mostrar_menu():
         grid.add_row(k, v)
     console.print(Panel(grid, title="[bold]MENU[/]", border_style="cyan"))
 
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 # PARSING UTILITÁRIO (INT + ENUMS CONHECIDOS)
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 def _try_int(s: str):
+    """Tenta converter uma string em um inteiro.
+
+    Args:
+        s (str): A string a ser convertida.
+
+    Returns:
+        int | str: O valor convertido em inteiro ou a string original em caso de falha.
+    """
     try:
         return int(s)
     except Exception:
         return s
 
+
 def _coerce_enum(value: Any):
+    """Tenta converter um valor para um enum conhecido.
+
+    Args:
+        value (Any): O valor a ser convertido.
+
+    Returns:
+        Any: O valor convertido ou o valor original se a conversão falhar.
+    """
     if not isinstance(value, str):
         return value
     v = value.strip().upper()
@@ -180,6 +245,11 @@ def _coerce_enum(value: Any):
     return value
 
 def ler_parametros_interativos():
+    """Lê parâmetros interativos do usuário.
+
+    Returns:
+        Dict[str, Any]: Um dicionário com os parâmetros lidos.
+    """
     console.print(Panel.fit(
         "[bold]Digite parâmetros no formato[/] [cyan]chave=valor[/].\n"
         "Ex.: [green]valor=70[/], [green]cor=quente[/], [green]estacao=JAZZ[/]\n"
@@ -199,12 +269,14 @@ def ler_parametros_interativos():
         args[k] = v
     return args
 
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 # FLUXO DE COMANDOS CLI
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 def executar_comando(hub: Hub, disp):
+    """Executa um comando em um dispositivo."""
     mostrar_comandos(disp)
-    # Hints contextuais para parâmetros aceitos
+    
+    # hints contextuais para parâmetros aceitos
     try:
         from smart_home.dispositivos.luz import Luz
         from smart_home.dispositivos.radio import Radio
@@ -214,15 +286,15 @@ def executar_comando(hub: Hub, disp):
         Luz = Radio = Persiana = CafeteiraCapsulas = object  # fallbacks
 
     hints = []
-    if isinstance(disp, Luz):
-        cores = ", ".join(c.name for c in CorLuz)
-        hints.append(f"cor={cores}")
-        hints.append("valor(brilho)=0..100")
+    if isinstance(disp, Luz): 
+        cores = ", ".join(c.name for c in CorLuz) # listar nomes das cores
+        hints.append(f"cor={cores}")          
+        hints.append("valor(brilho)=0..100")      # brilho 0..100
     if isinstance(disp, Radio):
-        estacoes = ", ".join(e.name for e in EstacaoRadio)
+        estacoes = ", ".join(e.name for e in EstacaoRadio) # listar nomes das estações
         hints.append(f"estacao={estacoes}")
-        hints.append("valor(volume)=0..100")
-    if isinstance(disp, Persiana):
+        hints.append("valor(volume)=0..100")               # volume 0..100
+    if isinstance(disp, Persiana):                         # abertura 0..100
         hints.append("percentual/abertura/valor=0..100 (0 FECHADA, 100 ABERTA, 1-99 PARCIAL)")
     if isinstance(disp, CafeteiraCapsulas):
         hints.append("Sem parâmetros nos comandos atuais")
@@ -244,6 +316,7 @@ def executar_comando(hub: Hub, disp):
         console.print(Panel.fit(f"[red]Erro:[/] {e}", border_style="red"))
 
 def alterar_atributo(hub: Hub, disp):
+    """Altera um atributo de um dispositivo."""
     mostrar_atributos(disp)
     # Hints rápidos sobre atributos editáveis
     try:
@@ -452,6 +525,7 @@ def gerar_relatorio(hub: Hub, cfg_path: Path):
         console.print(Panel.fit(f"[red]Erro gerando relatório:[/] {e}", border_style="red"))
 
 def adicionar_dispositivo(hub: Hub):
+    """Adiciona um novo dispositivo ao hub."""
     tipos = ", ".join(t.value for t in TipoDeDispositivo)
     console.print(Panel.fit(f"Tipos suportados: [bold]{tipos}[/]", title="Adicionar", border_style="cyan"))
 
@@ -499,6 +573,7 @@ def adicionar_dispositivo(hub: Hub):
         console.print(Panel.fit(f"[red]Erro criando dispositivo:[/] {e}", border_style="red"))
 
 def remover_dispositivo(hub: Hub):
+    """Remove um dispositivo do hub."""
     listar_dispositivos(hub)
     id_ = Prompt.ask("\n[bold]ID do dispositivo a remover[/]").strip()
     try:
@@ -507,17 +582,19 @@ def remover_dispositivo(hub: Hub):
     except Exception as e:
         console.print(Panel.fit(f"[red]Erro:[/] {e}", border_style="red"))
 
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 # MAIN CLI
-#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Smart Home Hub (CLI)")
+    """Função principal do CLI."""
+    parser = argparse.ArgumentParser(description="Smart Home Hub (CLI)") # descrição
+    # config JSON padrão em data/config.json
     parser.add_argument("--config", type=str, default="data/config.json", help="Arquivo de configuração JSON")
-    args = parser.parse_args()
-    cfg_path = Path(args.config)
+    args = parser.parse_args()    # parse args: servem para carregar/salvar config do hub
+    cfg_path = Path(args.config)  # caminho config
 
-    hub = Hub()
+    hub = Hub()                   # instância do hub
     
     # carrega config se existir; senão, defaults
     try:
@@ -529,16 +606,14 @@ def main():
 
 
     # Observers
-    hub.registrar_observer(ConsoleObserver())
+    hub.registrar_observer(ConsoleObserver()) # console em tempo real
     hub.registrar_observer(CsvObserverTransitions(Path("data/logs/transitions.csv")))  # transições estado
-
-    # CSV geral:
-    hub.registrar_observer(CsvObserverEventos(Path("data/logs/events.csv")))
-    # comandos (opcional para análises futuras)
-    hub.registrar_observer(CsvObserverComandos(Path("data/logs/commands.csv")))
+    hub.registrar_observer(CsvObserverEventos(Path("data/logs/events.csv"))) # CSV geral(eventos)
+    hub.registrar_observer(CsvObserverComandos(Path("data/logs/commands.csv"))) # CSV comandos
     
-    header()
-
+    header()  # cabeçalho do hub 
+    
+    # loop principal
     while True:
         mostrar_menu()
         opcao = Prompt.ask("[bold]Selecione[/]", choices=[str(i) for i in range(1, 11)], default="1")
@@ -589,6 +664,6 @@ def main():
                     console.print(Panel.fit(f"[red]Erro salvando config:[/] {e}", border_style="red"))
             console.print("\n[bold green]💾 Encerrando Hub...\n\n🌟 Até mais!🌟\n[/]")
             break
-
+#--------------------------------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
     main()

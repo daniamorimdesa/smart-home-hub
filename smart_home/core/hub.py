@@ -1,43 +1,49 @@
 # smart_home/core/hub.py: gerenciamento dos dispositivos e observadores
 from __future__ import annotations
 from typing import Dict, Any, List, Optional
-import json
 from pathlib import Path
 from smart_home.core.eventos import Evento, TipoEvento
 from smart_home.core.observers import Observer
 from smart_home.core.persistencia import salvar_config_hub, carregar_config_hub
-from smart_home.dispositivos.porta import Porta, EstadoPorta
-from smart_home.dispositivos.luz import Luz, CorLuz, EstadoLuz
-from smart_home.dispositivos.tomada import Tomada, EstadoTomada
-from smart_home.dispositivos.cafeteira import CafeteiraCapsulas, EstadoCafeteira
-from smart_home.dispositivos.radio import Radio, EstacaoRadio, EstadoRadio
-from smart_home.dispositivos.persiana import Persiana, EstadoPersiana
-from smart_home.core.dispositivos import DispositivoBase, TipoDeDispositivo
+from smart_home.dispositivos.porta import Porta
+from smart_home.dispositivos.luz import Luz, CorLuz
+from smart_home.dispositivos.tomada import Tomada
+from smart_home.dispositivos.cafeteira import CafeteiraCapsulas
+from smart_home.dispositivos.radio import Radio, EstacaoRadio
+from smart_home.dispositivos.persiana import Persiana
+from smart_home.core.dispositivos import DispositivoBase
 from smart_home.core.erros import ErroDeValidacao
 #--------------------------------------------------------------------------------------------------
 # HUB (CAMADA DE SERVIÇO) - GERENCIA DISPOSITIVOS, COMANDOS, ATRIBUTOS, ROTINAS E OBSERVERS
 #--------------------------------------------------------------------------------------------------
 class Hub:
+    # construtor do Hub
     def __init__(self) -> None:
-        self.dispositivos: Dict[str, DispositivoBase] = {}
-        self._observers: list[Observer] = []
-        self.rotinas: dict[str, list[dict]] = {}
+        self.dispositivos: Dict[str, DispositivoBase] = {}  # id -> dispositivo
+        self._observers: list[Observer] = []                # lista de observadores
+        self.rotinas: dict[str, list[dict]] = {}            # rotinas (nome -> lista de passos)
 
     # injeta emissor em dispositivo recém criado/recuperado
     def _wire(self, disp: DispositivoBase) -> DispositivoBase:
-        disp.set_emissor(lambda evt: self._emitir(evt))
+        disp.set_emissor(lambda evt: self._emitir(evt)) # emissor de eventos
         return disp
 
     def registrar_observer(self, obs: Observer) -> None:
+        """Registra um observer para receber eventos do hub."""
         self._observers.append(obs)
 
     def _emitir(self, evt: Evento) -> None:
+        """Emite um evento para todos os observers registrados."""
         for obs in self._observers:
             try: obs.on_event(evt)
-            except Exception: pass  # não derruba o hub
+            except Exception: 
+                pass  # não derruba o hub
  
-    # CRUD
+#--------------------------------------------------------------------------------------------------
+# CRUD DO HUB
+#--------------------------------------------------------------------------------------------------
     def adicionar(self, tipo: str, id: str, nome: str, **attrs: Any) -> DispositivoBase:
+        """Adiciona um novo dispositivo ao hub."""
         if id in self.dispositivos:
             from smart_home.core.erros import DispositivoJaExiste
             raise DispositivoJaExiste(f"Ja existe dispositivo com id '{id}'.")
@@ -48,6 +54,7 @@ class Hub:
         return disp
 
     def remover(self, id: str) -> None:
+        """Remove um dispositivo do hub pelo id."""
         if id not in self.dispositivos:
             from smart_home.core.erros import DispositivoNaoEncontrado
             raise DispositivoNaoEncontrado(f"Dispositivo '{id}' nao encontrado.")
@@ -55,31 +62,39 @@ class Hub:
         del self.dispositivos[id]
         self._emitir(Evento(TipoEvento.DISPOSITIVO_REMOVIDO, {"id": id, "tipo": tipo}))
 
-    # Acoes
+#--------------------------------------------------------------------------------------------------
+# AÇÕES DO HUB 
+#--------------------------------------------------------------------------------------------------
     def executar_comando(self, id: str, comando: str, **kwargs: Any) -> None:
-        disp = self._exigir(id)
-        disp.executar_comando(comando, **kwargs)
+        """Executa um comando em um dispositivo do hub."""
+        disp = self._exigir(id)                    #  exige o dispositivo
+        disp.executar_comando(comando, **kwargs)   # delega para o dispositivo
 
 
     def alterar_atributo(self, id: str, chave: str, valor: Any) -> None:
-        disp = self._exigir(id)
-        antigo = disp.atributos().get(chave)
-        disp.alterar_atributo(chave, valor)
+        """Altera um atributo de um dispositivo do hub."""
+        disp = self._exigir(id)               # exige o dispositivo
+        antigo = disp.atributos().get(chave)  # obtém valor antigo
+        disp.alterar_atributo(chave, valor)   # delega para o dispositivo
+        # emite evento de atributo alterado
         self._emitir(Evento(TipoEvento.ATRIBUTO_ALTERADO, {
             "id": id, "atributo": chave, "antes": antigo, "depois": valor
         }))
         
         
-        
-    # ----------- executar rotina -----------
+#--------------------------------------------------------------------------------------------------
+# EXECUÇÃO DE ROTINAS
+#--------------------------------------------------------------------------------------------------
     def executar_rotina(self, nome: str) -> dict:
-        passos = self.rotinas.get(nome)
+        """Executa uma rotina predefinida, retornando um resumo dos resultados."""
+        passos = self.rotinas.get(nome) # obtém passos da rotina
         if not passos:
-            from smart_home.core.erros import ErroDeValidacao
-            raise ErroDeValidacao(f"Rotina '{nome}' nao encontrada.", detalhes={"nome": nome})
+            from smart_home.core.erros import RotinaNaoEncontrada
+            raise RotinaNaoEncontrada(f"Rotina '{nome}' nao encontrada.", detalhes={"nome": nome})
 
         resultados = []
         ok = 0
+        # itera sobre os passos da rotina
         for i, passo in enumerate(passos, 1):
             pid = passo.get("id")
             cmd = passo.get("comando")
@@ -105,9 +120,17 @@ class Hub:
         return resumo
 
         
-    # ---------- Fabrica/Factory ----------
-    def _criar_dispositivo(self, tipo: str, id: str, nome: str, attrs: Dict[str, Any]) -> DispositivoBase:
-        t = tipo.strip().upper()
+#--------------------------------------------------------------------------------------------------
+# FÁBRICA/FACTORY
+#--------------------------------------------------------------------------------------------------
+    def _criar_dispositivo(self, 
+                           tipo: str, 
+                           id: str, 
+                           nome: str, 
+                           attrs: Dict[str, Any]) -> DispositivoBase:
+        """ Fábrica de dispositivos. Leva em conta os atributos opcionais de cada tipo."""
+        t = tipo.strip().upper() # tipo em maiúsculas
+        # tentaR instanciar conforme tipo
         if t == "PORTA":
             return Porta(id=id, nome=nome)
         if t == "LUZ":
@@ -133,23 +156,28 @@ class Hub:
         # tipo não reconhecido
         raise ErroDeValidacao(f"Tipo de dispositivo nao suportado: {t}", detalhes={"tipo": t})
 
-    # ---------- Consultas ----------
+#--------------------------------------------------------------------------------------------------
+# CONSULTAS DO HUB 
+#--------------------------------------------------------------------------------------------------
     def listar(self) -> List[DispositivoBase]:
+        """Lista todos os dispositivos do hub."""
         return list(self.dispositivos.values())
 
     def obter(self, id: str) -> Optional[DispositivoBase]:
+        """Obtém um dispositivo pelo ID."""
         return self.dispositivos.get(id)
 
     def _exigir(self, id: str) -> DispositivoBase:
+        """Obtém um dispositivo pelo ID, ou lança erro se não existir."""
         disp = self.obter(id)
         if not disp:
             from smart_home.core.erros import DispositivoNaoEncontrado
             raise DispositivoNaoEncontrado(f"Dispositivo '{id}' nao encontrado.")
         return disp
 
-    # ---------- Persistência (wrappers para persistencia.py) ----------
-
-    # (_attrs_persistentes removido - não utilizado)
+#--------------------------------------------------------------------------------------------------
+# PERSISTÊNCIA
+#--------------------------------------------------------------------------------------------------
 
     def salvar_config(self, caminho: str | Path) -> None:
         """Salva configuração delegando ao módulo de persistência.
@@ -174,7 +202,9 @@ class Hub:
         # rotinas já normalizadas
         self.rotinas = rotinas
 
-    # ---------- Defaults ----------
+#--------------------------------------------------------------------------------------------------
+# LISTA DE DISPOSITIVOS DEFAULTS
+#--------------------------------------------------------------------------------------------------
     def carregar_defaults(self) -> None:
         """Carrega uma configuração default, com alguns dispositivos."""
         self.dispositivos.clear()

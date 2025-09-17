@@ -14,6 +14,7 @@ class CsvLogger:
     _lock = Lock()
 
     def __new__(cls) -> "CsvLogger":
+        """Garante que só haja uma instância (singleton thread-safe). """
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
@@ -22,6 +23,7 @@ class CsvLogger:
             return cls._instance
 
     def write_row(self, path: Path | str, headers: Iterable[str], row: Mapping[str, Any]) -> None:
+        """Escreve uma linha em CSV, criando o arquivo e escrevendo o cabeçalho se necessário."""
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
 
@@ -36,6 +38,7 @@ class CsvLogger:
             writer.writerow(row)
 
     def write_rows(self, path: Path | str, headers: Iterable[str], rows: Iterable[Mapping[str, Any]]) -> None:
+        """Escreve múltiplas linhas em CSV, criando o arquivo e escrevendo o cabeçalho se necessário."""
         for r in rows:
             self.write_row(path, headers, r)
     

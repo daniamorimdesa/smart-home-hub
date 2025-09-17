@@ -47,3 +47,11 @@ timestamp,id_dispositivo,comando,estado_origem,estado_destino
 2025-09-16T20:02:04,tomada_tv,ligar,DESLIGADA,LIGADA
 2025-09-16T20:02:04,persiana_quarto,ajustar,FECHADA,ABERTA
 2025-09-16T20:02:04,porta_entrada,destrancar,TRANCADA,DESTRANCADA
+2025-09-16T21:16:48,porta_entrada,trancar,TRANCADA,TRANCADA
+2025-09-16T21:16:48,luz_sala,desligar,LIGADA,DESLIGADA
+2025-09-16T21:16:48,tomada_tv,desligar,DESLIGADA,DESLIGADA
+2025-09-16T21:16:48,luz_cozinha,desligar,LIGADA,DESLIGADA
+2025-09-16T21:16:48,radio_cozinha,desligar,LIGADO,DESLIGADO
+2025-09-16T21:16:48,cafeteira_cozinha,finalizar_preparo,DESLIGADA,DESLIGADA
+2025-09-16T21:16:48,cafeteira_cozinha,desligar,DESLIGADA,DESLIGADA
+2025-09-16T21:16:48,persiana_quarto,ajustar,ABERTA,FECHADA

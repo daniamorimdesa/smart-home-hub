@@ -8,7 +8,7 @@ from datetime import datetime
 from collections import Counter, defaultdict
 from functools import reduce
 # -------------------------------------------------------------------------------------------------
-# Util: leitura de arquivos
+# UTIL: LEITURA DE ARQUIVOS
 # -------------------------------------------------------------------------------------------------
 _DT_FMT = "%Y-%m-%dT%H:%M:%S"  # formato primário de timestamps dos CSVs
 
@@ -101,7 +101,7 @@ def ler_config(path: Path) -> Dict[str, dict]:
     return idx
 
 # -------------------------------------------------------------------------------------------------
-# Filtros de janela temporal
+# FILTROS DE JANELA TEMPORAL
 # -------------------------------------------------------------------------------------------------
 def _filtro_periodo(rows: Iterable[dict], inicio: Optional[datetime], fim: Optional[datetime]) -> List[dict]:
     """Filtra registros entre [inicio, fim]."""
@@ -133,7 +133,7 @@ def _intervalos_ligado(evts: List[dict], on_label: str, off_label: str, fim_peri
 
 # -------------------------------------------------------------------------------------------------
 # 1) Consumo por TOMADA (Wh no período)  — reduce
-# Lemos transitions.csv; para cada tomada, calculamos somando (potencia_w * horas_ligadas)
+# Ler transitions.csv; para cada tomada, calcular somando (potencia_w * horas_ligadas)
 # -------------------------------------------------------------------------------------------------
 def consumo_por_tomada(
     transitions_csv: Path,
@@ -241,8 +241,8 @@ def dispositivos_mais_usados(
     return c.most_common(top_n)
 
 # -------------------------------------------------------------------------------------------------
-# 4) Bônus: Quantidade de cafés preparados no período
-#    (usa transitions.csv: evento == 'finalizar_preparo' OU destino == 'PRONTA' vindo de PREPARANDO)
+# 4) Quantidade de cafés preparados no período
+#    (usa transitions.csv: evento == 'finalizar_preparo' ou destino == 'PRONTA' vindo de PREPARANDO)
 # -------------------------------------------------------------------------------------------------
 def cafes_preparados(
     transitions_csv: Path,
@@ -284,7 +284,7 @@ def cafes_por_dia(
     ]
 
 # -------------------------------------------------------------------------------------------------
-# 5) Bônus: Distribuição de comandos por tipo de dispositivo (events.csv + config.json)
+# 5) Distribuição de comandos por tipo de dispositivo (events.csv + config.json)
 #    Conta COMANDO_EXECUTADO por tipo
 # -------------------------------------------------------------------------------------------------
 def distribuicao_comandos_por_tipo(
@@ -324,101 +324,13 @@ def resumo(
     }
 
 # -------------------------------------------------------------------------------------------------
-# Persistência opcional dos relatórios em CSV
+# Persistência de CSV
 # -------------------------------------------------------------------------------------------------
 def salvar_csv(path: Path, headers: List[str], rows: Iterable[dict]) -> None:
+    """Salva lista de dicionários em CSV."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=headers)
         w.writeheader()
         for r in rows:
             w.writerow({k: r.get(k) for k in headers})
-
-# -------------------------------------------------------------------------------------------------
-# Mini-CLI para facilitar testes
-# Exemplos:
-#   python -m smart_home.core.relatorio consumo --trans data/logs/transitions.csv --config data/config.json --out data/reports/consumo.csv
-#   python -m smart_home.core.relatorio luzes --trans data/logs/transitions.csv --config data/config.json
-#   python -m smart_home.core.relatorio top --trans data/logs/transitions.csv --events data/logs/events.csv --n 5
-#   python -m smart_home.core.relatorio cafes --trans data/logs/transitions.csv
-#   python -m smart_home.core.relatorio dist --events data/logs/events.csv --config data/config.json
-# -------------------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    import argparse
-
-    p = argparse.ArgumentParser("Relatórios Smart Home")
-    sub = p.add_subparsers(dest="cmd", required=True)
-
-    def add_periodo(a: argparse.ArgumentParser, incluir_out: bool = False, incluir_config: bool = False, incluir_events: bool = False):
-        a.add_argument("--trans", type=Path, required=True, help="Caminho para transitions.csv")
-        if incluir_config:
-            a.add_argument("--config", type=Path, required=True, help="Caminho para config.json")
-        if incluir_events:
-            a.add_argument("--events", type=Path, required=True, help="Caminho para events.csv")
-        a.add_argument("--inicio", type=str, default=None, help="Datetime ISO inicial (opcional)")
-        a.add_argument("--fim", type=str, default=None, help="Datetime ISO final (opcional)")
-        if incluir_out:
-            a.add_argument("--out", type=Path, default=None, help="Salvar CSV nesse caminho")
-        a.add_argument("--json", action="store_true", help="Força saída em JSON (stdout)")
-
-    # consumo
-    add_periodo(sub.add_parser("consumo", help="Consumo por tomada (Wh)"), incluir_out=True, incluir_config=True)
-
-    # luzes
-    add_periodo(sub.add_parser("luzes", help="Tempo total com cada luz ligada"), incluir_out=True, incluir_config=True)
-
-    # top usados
-    sp_top = sub.add_parser("top", help="Dispositivos mais usados")
-    add_periodo(sp_top, incluir_config=False, incluir_events=True)
-    sp_top.add_argument("--n", type=int, default=10)
-
-    # cafés
-    add_periodo(sub.add_parser("cafes", help="Quantidade de cafés preparados"))
-
-    # distribuição por tipo
-    add_periodo(sub.add_parser("dist", help="Distribuição de comandos por tipo"), incluir_out=True, incluir_config=True, incluir_events=True)
-
-    # resumo agregado
-    add_periodo(sub.add_parser("resumo", help="Resumo consolidado (várias métricas)"), incluir_config=True, incluir_events=True)
-
-    args = p.parse_args()
-    inicio = datetime.fromisoformat(args.inicio) if getattr(args, "inicio", None) else None
-    fim = datetime.fromisoformat(args.fim) if getattr(args, "fim", None) else None
-
-    def _emit(obj: Any):
-        if args.json:
-            print(json.dumps(obj, ensure_ascii=False, indent=2))
-        else:
-            if isinstance(obj, list):
-                for item in obj:
-                    print(item)
-            else:
-                print(obj)
-
-    if args.cmd == "consumo":
-        rows = consumo_por_tomada(args.trans, args.config, inicio, fim)
-        if args.out:
-            salvar_csv(args.out, ["id_dispositivo", "potencia_w", "horas_ligada", "total_wh", "inicio_periodo", "fim_periodo"], rows)
-            print(f"[OK] Salvo em {args.out}")
-        _emit(rows)
-    elif args.cmd == "luzes":
-        rows = tempo_total_luzes_ligadas(args.trans, args.config, inicio, fim)
-        if args.out:
-            salvar_csv(args.out, ["id_dispositivo", "segundos_ligada", "hhmmss"], rows)
-            print(f"[OK] Salvo em {args.out}")
-        _emit(rows)
-    elif args.cmd == "top":
-        top_rows = dispositivos_mais_usados(args.trans, args.events, args.n, inicio, fim)
-        _emit(top_rows)
-    elif args.cmd == "cafes":
-        qtd = cafes_preparados(args.trans, inicio, fim)
-        _emit({"cafes_preparados": qtd})
-    elif args.cmd == "dist":
-        rows = distribuicao_comandos_por_tipo(args.events, args.config, inicio, fim)
-        if args.out:
-            salvar_csv(args.out, ["tipo", "qtd"], [{"tipo": t, "qtd": n} for t, n in rows])
-            print(f"[OK] Salvo em {args.out}")
-        _emit(rows)
-    elif args.cmd == "resumo":
-        data = resumo(args.trans, args.events, args.config, inicio, fim)
-        _emit(data)

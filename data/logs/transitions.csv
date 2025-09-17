@@ -32,3 +32,7 @@ timestamp,id_dispositivo,evento,estado_origem,estado_destino
 2025-09-16T20:02:04,tomada_tv,ligar,desligada,ligada
 2025-09-16T20:02:04,persiana_quarto,ajustar,fechada,aberta
 2025-09-16T20:02:04,porta_entrada,destrancar,trancada,destrancada
+2025-09-16T21:16:48,luz_sala,desligar,ligada,desligada
+2025-09-16T21:16:48,luz_cozinha,desligar,ligada,desligada
+2025-09-16T21:16:48,radio_cozinha,desligar,ligado,desligado
+2025-09-16T21:16:48,persiana_quarto,ajustar,aberta,fechada

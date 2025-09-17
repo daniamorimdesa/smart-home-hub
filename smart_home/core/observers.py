@@ -24,9 +24,11 @@ class CsvObserverTransitions(Observer):
     HEADERS = ["timestamp", "id_dispositivo", "evento", "estado_origem", "estado_destino"]
 
     def __init__(self, path: Path) -> None:
+        """Inicializa o observer com o caminho do arquivo CSV destino. """
         self.path = Path(path)
 
     def on_event(self, evt: Evento) -> None:
+        """Registra somente eventos de transição de estado (TRANSICAO_ESTADO)."""
         if evt.tipo != TipoEvento.TRANSICAO_ESTADO:
             return
         p = evt.payload
@@ -63,6 +65,7 @@ class CsvObserverComandos(Observer):
         self.logger = CsvLogger()
 
     def on_event(self, evt: Evento) -> None:
+        """Registra somente eventos de comando executado (COMANDO_EXECUTADO)."""
         if evt.tipo is not TipoEvento.COMANDO_EXECUTADO:
             return
         p = evt.payload
@@ -79,17 +82,15 @@ class CsvObserverComandos(Observer):
 # OBSERVER PARA GRAVAR TODOS OS EVENTOS EM CSV
 #--------------------------------------------------------------------------------------------------
 class CsvObserverEventos(Observer):
-    """
-    (Opcional) Joga TODOS os eventos num CSV geral.
-    Útil se quiser contar "dispositivos mais usados", etc.
-    """
+    """Grava os eventos num CSV geral."""
     def __init__(self, path_csv: str | Path) -> None:
         self.path = Path(path_csv)
         self.headers = ["timestamp", "tipo", "id", "extra"]
         self.logger = CsvLogger()
 
     def on_event(self, evt: Evento) -> None:
-        p = evt.payload
+        """Registra todos os eventos."""
+        p = evt.payload 
         row = {
             "timestamp": evt.timestamp,
             "tipo": evt.tipo.name,

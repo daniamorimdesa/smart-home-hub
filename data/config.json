@@ -18,11 +18,11 @@
       "id": "luz_sala",
       "tipo": "LUZ",
       "nome": "Luz da Sala",
-      "estado": "LIGADA",
+      "estado": "DESLIGADA",
       "atributos": {
-        "brilho": 100,
+        "brilho": 0,
         "cor": "QUENTE",
-        "estado_nome": "LIGADA"
+        "estado_nome": "DESLIGADA"
       }
     },
     {
@@ -55,10 +55,10 @@
       "id": "radio_cozinha",
       "tipo": "RADIO",
       "nome": "Rádio da Cozinha",
-      "estado": "LIGADO",
+      "estado": "DESLIGADO",
       "atributos": {
-        "estado_nome": "LIGADO",
-        "volume": 50,
+        "estado_nome": "DESLIGADO",
+        "volume": 0,
         "estacao": "LOFI"
       }
     },
@@ -66,21 +66,21 @@
       "id": "persiana_quarto",
       "tipo": "PERSIANA",
       "nome": "Persiana do Quarto",
-      "estado": "ABERTA",
+      "estado": "FECHADA",
       "atributos": {
-        "estado_nome": "ABERTA",
-        "abertura": 100
+        "estado_nome": "FECHADA",
+        "abertura": 0
       }
     },
     {
       "id": "luz_cozinha",
       "tipo": "LUZ",
       "nome": "Luz da Cozinha",
-      "estado": "LIGADA",
+      "estado": "DESLIGADA",
       "atributos": {
-        "brilho": 100,
+        "brilho": 0,
         "cor": "NEUTRA",
-        "estado_nome": "LIGADA"
+        "estado_nome": "DESLIGADA"
       }
     },
     {

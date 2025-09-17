@@ -10,17 +10,40 @@ Sistema de automação residencial em Python demonstrando:
 - Programação funcional em relatórios (map/filter/reduce, comprehensions)
 - Persistência em JSON (config) e CSV (logs + relatórios)
 
-	dispositivos/
-		luz.py, tomada.py, cafeteira.py, radio.py, porta.py, persiana.py
-data/
-	config.json          (Config/estado persistido)
-	logs/
-		transitions.csv    (TRANSICAO_ESTADO)
-		commands.csv       (COMANDO_EXECUTADO granular)
-		events.csv         (Todos eventos agregados)
-	reports/             (CSV de relatórios gerados)
+## 1. Estrutura de Pastas
 ```
-
+SMART-HOME-HUB/
+├── .venv/
+├── data/
+│ ├── logs/
+│ ├── reports/
+│ └── config.json
+├── images/
+├── smart_home/
+│ └── core/
+│ ├── init.py
+│ ├── cli.py
+│ ├── dispositivos.py
+│ ├── erros.py
+│ ├── eventos.py
+│ ├── hub.py
+│ ├── logger.py
+│ ├── observers.py
+│ ├── persistencia.py
+│ ├── relatorios_demo.py
+│ └── relatorios.py
+├── dispositivos/
+│ ├── init.py
+│ ├── cafeteira.py
+│ ├── luz.py
+│ ├── persiana.py
+│ ├── porta.py
+│ ├── radio.py
+│ └── tomada.py
+├── .gitignore
+├── README.md
+└── requirements.txt
+```
 ---
 ## 2. Execução Rápida
 Instale dependências:

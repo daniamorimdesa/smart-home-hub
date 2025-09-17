@@ -47,3 +47,9 @@ class ErroDeValidacao(SmartHomeError):
 	"""Erros de validação de comandos, atributos ou rotinas."""
 	def __init__(self, mensagem: str, detalhes: dict | None = None) -> None:
 		super().__init__(mensagem, detalhes)
+
+
+class RotinaNaoEncontrada(SmartHomeError):
+	"""Rotina referenciada não foi localizada no hub."""
+	def __init__(self, mensagem: str, detalhes: dict | None = None) -> None:
+		super().__init__(mensagem, detalhes)

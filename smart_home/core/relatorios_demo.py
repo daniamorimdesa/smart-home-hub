@@ -1,12 +1,10 @@
-
+# smart_home/core/relatorios_demo.py: relatórios demonstrativos
 from __future__ import annotations
-
 from pathlib import Path
 from datetime import datetime
 from functools import reduce
 import json
 import argparse
-
 from .relatorios import (
     consumo_por_tomada,
     tempo_total_luzes_ligadas,
@@ -19,10 +17,11 @@ from .relatorios import (
     ler_config,
 )
 #--------------------------------------------------------------------------------------------------
-# Script demonstrativo para gerar relatórios a partir dos logs.
+# SCRIPT DEMONSTRATIVO PARA GERAR RELATÓRIOS A PARTIR DOS LOGS
 #--------------------------------------------------------------------------------------------------
 
 def _paths_base(explicit_root: Path | None = None) -> dict:
+    """Resolve caminhos padrão de dados/logs assumindo layout do projeto."""
     root = explicit_root or Path(__file__).resolve().parents[2]
     data_dir = root / "data"
     logs_dir = data_dir / "logs"
@@ -38,6 +37,8 @@ def _paths_base(explicit_root: Path | None = None) -> dict:
 
 
 def gerar_csv_consumo(transitions: Path, config: Path, saida: Path, inicio: datetime | None, fim: datetime | None):
+    """Gera o CSV de consumo por tomada e imprime total geral no console.
+    Usa `consumo_por_tomada` e aplica uma compreensão de lista para projetar"""
     rows = consumo_por_tomada(transitions, config, inicio, fim)
     minimal = [
         {
@@ -55,27 +56,38 @@ def gerar_csv_consumo(transitions: Path, config: Path, saida: Path, inicio: date
 
 
 def executar_relatorios(inicio: str | None, fim: str | None, json_out: bool):
-    paths = _paths_base()
-    if not paths["transitions_csv"].exists():
+    """Executa os relatórios demonstrativos e imprime no console.
+    Se json_out for True, imprime o resultado agregado em JSON."""
+    paths = _paths_base() # usa layout padrão
+    if not paths["transitions_csv"].exists(): # verifica existência dos arquivos
         raise SystemExit(f"Arquivo não encontrado: {paths['transitions_csv']}")
     if not paths["config_json"].exists():
         raise SystemExit(f"Arquivo não encontrado: {paths['config_json']}")
 
-    dt_inicio = datetime.fromisoformat(inicio) if inicio else None
+    dt_inicio = datetime.fromisoformat(inicio) if inicio else None # parse opcional
     dt_fim = datetime.fromisoformat(fim) if fim else None
 
+
+    # Gerar CSV de consumo por tomada
     consumo_min, total_geral = gerar_csv_consumo(
         paths["transitions_csv"], paths["config_json"], paths["reports_dir"] / "report_consumo_wh.csv", dt_inicio, dt_fim
     )
-
+    
+    
+    # relatório de tempo de luzes ligadas
     luzes = tempo_total_luzes_ligadas(paths["transitions_csv"], paths["config_json"], dt_inicio, dt_fim)
-
+    
+    
+    # relatório de top dispositivos mais usados (se existir events.csv)
     events_ok = paths["events_csv"].exists()
     top = dispositivos_mais_usados(
         paths["transitions_csv"], paths["events_csv"], 10, dt_inicio, dt_fim
     ) if events_ok else []
 
+
+    # relatório de cafés preparados
     cafes = cafes_preparados(paths["transitions_csv"], dt_inicio, dt_fim)
+    # relatório de distribuição de comandos por tipo (se existir events.csv)
     dist = distribuicao_comandos_por_tipo(
         paths["events_csv"], paths["config_json"], dt_inicio, dt_fim
     ) if events_ok else []
@@ -84,7 +96,6 @@ def executar_relatorios(inicio: str | None, fim: str | None, json_out: bool):
     period_start = dt_inicio.isoformat() if dt_inicio else None
     period_end = dt_fim.isoformat() if dt_fim else None
 
-    # (Removido CSV de cafés agregados; mantemos apenas relatório diário)
 
     dist_csv = paths["reports_dir"] / "report_dist_comandos_tipo.csv"
     dist_rows_csv = [{"tipo": t, "qtd": q} for t, q in dist]
@@ -186,6 +197,7 @@ def executar_relatorios(inicio: str | None, fim: str | None, json_out: bool):
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
+    """Constrói o parser de argumentos para a linha de comando."""
     p = argparse.ArgumentParser(
         "Relatórios demonstrativos (relatorios_demo.py)",
         description="Gera arquivos de exemplo e imprime métricas derivadas dos logs.",
@@ -195,14 +207,3 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--json", action="store_true", help="Imprime resultado agregado em JSON")
     return p
 
-
-def main():
-    args = build_arg_parser().parse_args()
-    executar_relatorios(args.inicio, args.fim, args.json)
-
-#--------------------------------------------------------------------------------------------------
-# Testes manuais
-#--------------------------------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    main()
