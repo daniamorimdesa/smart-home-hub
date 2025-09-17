@@ -3,12 +3,16 @@
 
 ![Menu Principal](images/01-menu.JPG)
 
-Sistema de automação residencial em Python demonstrando:
+Sistema de automação residencial em Python.
+
+## Objetivo
+Hub capaz de gerenciar dispositivos domésticos (porta, luz, tomada inteligente, cafeteira, persiana, rádio etc.), executando comandos, rotinas e gerando relatórios a partir dos logs. O projeto aplica conteúdos da disciplina:
 - Programação Orientada a Objetos (dispositivos com FSM)
 - Máquina de estados com `transitions`
-- Padrões: Observer, Singleton (logger), Facade
+- Padrões de projeto: Observer, Singleton (logger), Factory/Facade
 - Programação funcional em relatórios (map/filter/reduce, comprehensions)
 - Persistência em JSON (config) e CSV (logs + relatórios)
+- Enums e propriedades (validação de atributos); exceções customizadas
 
 ## 1. Estrutura de Pastas
 ```
@@ -20,45 +24,50 @@ SMART-HOME-HUB/
 │ └── config.json
 ├── images/
 ├── smart_home/
-│ └── core/
-│ ├── init.py
-│ ├── cli.py
-│ ├── dispositivos.py
-│ ├── erros.py
-│ ├── eventos.py
-│ ├── hub.py
-│ ├── logger.py
-│ ├── observers.py
-│ ├── persistencia.py
-│ ├── relatorios_demo.py
-│ └── relatorios.py
-├── dispositivos/
-│ ├── init.py
-│ ├── cafeteira.py
-│ ├── luz.py
-│ ├── persiana.py
-│ ├── porta.py
-│ ├── radio.py
-│ └── tomada.py
+│ ├── __init__.py
+│ ├── core/
+│ │ ├── __init__.py
+│ │ ├── cli.py                # CLI interativa (Rich)
+│ │ ├── hub.py                # gerenciamento (serviço)
+│ │ ├── dispositivos.py       # classe base + enums
+│ │ ├── eventos.py            # tipos de eventos do hub
+│ │ ├── observers.py          # observers (console/CSV)
+│ │ ├── logger.py             # singleton de logging CSV
+│ │ ├── persistencia.py       # carregar/salvar JSON
+│ │ ├── erros.py              # exceções personalizadas
+│ │ ├── relatorios.py         # funções de relatório
+│ │ └── relatorios_demo.py    # geração em lote (exemplos)
+│ └── dispositivos/
+│   ├── __init__.py
+│   ├── porta.py
+│   ├── luz.py
+│   ├── tomada.py
+│   ├── cafeteira.py
+│   ├── persiana.py
+│   └── radio.py
 ├── .gitignore
 ├── README.md
 └── requirements.txt
 ```
 ---
 ## 2. Execução Rápida
-Instale dependências:
-```bash
+Pré-requisitos: Python 3.10+
+
+Ambiente (Windows PowerShell):
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-Inicie o hub:
-```bash
-python -m smart_home.core.cli 
+Inicie o hub (com config padrão):
+```powershell
+python -m smart_home.core.cli
 ```
 
-Se desejar, especifique arquivo de configuração (`data/config.json`):
-```bash
-python -m smart_home.core.cli --config data/config.json
+Ou informando o JSON de configuração:
+```powershell
+python -m smart_home.core.cli --config data\config.json
 ```
 
 
@@ -189,15 +198,22 @@ python -m smart_home.core.relatorios_demo
 O arquivo `data/config.json` guarda:
 ```
 {
+	"hub": { "nome": "Casa Inteligente", "versao": "1.0" },
 	"dispositivos": [
-		{"id": "luz_sala", "tipo": "LUZ", "nome": "Luz da Sala", "brilho": 70, "cor": "QUENTE"},
-		{"id": "tomada_tv", "tipo": "TOMADA", "nome": "Tomada TV", "potencia_w": 1200},
-		...
+		{ "id": "porta_entrada", "tipo": "PORTA", "nome": "Porta de Entrada", "estado": "TRANCADA", "atributos": {} },
+		{ "id": "luz_sala", "tipo": "LUZ", "nome": "Luz da Sala", "estado": "DESLIGADA", "atributos": { "brilho": 70, "cor": "QUENTE" } },
+		{ "id": "tomada_tv", "tipo": "TOMADA", "nome": "Tomada TV", "estado": "DESLIGADA", "atributos": { "potencia_w": 120 } },
+		{ "id": "cafeteira_cozinha", "tipo": "CAFETEIRA", "nome": "Cafeteira", "estado": "DESLIGADA", "atributos": {} }
 	],
 	"rotinas": {
-		"bom_dia": [
-			{"id": "luz_sala", "cmd": "ligar"},
-			{"id": "persiana_quarto", "cmd": "abrir"}
+		"acordar": [
+			{ "id": "luz_sala", "comando": "ligar", "argumentos": { "valor": 50 } },
+			{ "id": "cafeteira_cozinha", "comando": "preparar_bebida" },
+			{ "id": "persiana_quarto", "comando": "abrir" }
+		],
+		"modo_noite": [
+			{ "id": "porta_entrada", "comando": "trancar" },
+			{ "id": "luz_sala", "comando": "desligar" }
 		]
 	}
 }
@@ -230,6 +246,18 @@ Exemplo de passos:
 | PERSIANA | FECHADA/PARCIAL/ABERTA | abrir, fechar, ajustar(percentual) | abertura (0-100) |
 | PORTA | TRANCADA/DESTRANCADA/ABERTA | destrancar, trancar, abrir, fechar | tentativas_invalidas (derivado) |
 
+### 8.1 FSMs Obrigatórias (especificação)
+- Porta: trancada ↔ destrancada ↔ aberta
+	- destrancar: trancada → destrancada
+	- trancar: destrancada → trancada (bloqueado se aberta)
+	- abrir: destrancada → aberta
+	- fechar: aberta → destrancada
+- Luz: off/on
+	- ligar: off → on; desligar: on → off
+	- definir_brilho(valor 0–100): on → on; definir_cor(COR): on → on
+- Tomada: off/on
+	- ligar/desligar como acima; consumo estimado (Wh) por intervalos ligada
+
 ---
 ## 9. Exemplo de Saída (Resumo Agregado)
 Comando no submenu (opção 6 → 6 Resumo agregado):
@@ -256,48 +284,21 @@ res = [{"id_dispositivo": k, "segundos_ligada": v, "hhmmss": _fmt(v)} for k, v i
 ```
 
 ---
-## 11. Próximas Melhorias (Ideias)
-- API REST leve (FastAPI) sobre o hub
-- Export JSON de relatórios agregados em único endpoint
-- Métricas adicionais (porcentagem de tempo persiana aberta, histograma de brilho)
+## 11. Exceções e Tratamento de Erros
+- Base: `SmartHomeError`
+- Validações: `AtributoInvalido`, `ComandoInvalido`, `ErroDeValidacao`
+- Persistência: `ConfigInvalida`
+- Entidades: `DispositivoNaoEncontrado`, `DispositivoJaExiste`, `RotinaNaoEncontrada`
+Os erros são exibidos no CLI e logados quando relevante.
 
 ---
-## 12. Licença
-Uso educacional/demonstrativo.
+## 12. Padrões de Projeto
+- Observer: console e CSVs (transitions, events, commands)
+- Singleton: logger CSV
+- Factory/Facade: criação de dispositivos no Hub; Hub como fachada de serviço
 
 ---
-## 13. Atalhos Rápidos
-```bash
-# CLI interativo
-python -m smart_home.core.cli --config data/config.json
-
-# Gerar todos relatórios batch
-python -m smart_home.core.relatorios_demo
-
-# Scripts individuais
-python -m smart_home.core.report_consumo_tomadas --trans data/logs/transitions.csv --config data/config.json --out data/reports/report_consumo_wh.csv
-python -m smart_home.core.report_tempo_luzes --trans data/logs/transitions.csv --config data/config.json --out data/reports/report_tempo_luzes.csv
-python -m smart_home.core.report_dispositivos_mais_usados --trans data/logs/transitions.csv --events data/logs/events.csv --out data/reports/report_top_dispositivos.csv
-python -m smart_home.core.report_cafes_por_dia --trans data/logs/transitions.csv --out data/reports/report_cafes_por_dia.csv
-python -m smart_home.core.report_dist_comandos_tipo --events data/logs/events.csv --config data/config.json --out data/reports/report_dist_comandos_tipo.csv
-
-# Ajustar luz e gerar relatório de consumo
-python -m smart_home.core.cli --config data/config.json  # usar menu
-```
-
----
-## 14. Contato
-Projeto acadêmico / demonstração — adapte livremente.
 
 
----
-## 15. Galeria (Rascunhos)
-Rascunhos das máquinas e dispositivos (imagens em `images/`):
 
-![Máquinas 1](images/Máquinas_1.jpg)
-![Máquinas 2](images/Máquinas_2.jpg)
-![Máquinas 3](images/Máquinas_3.jpg)
-![Máquinas 4](images/Máquinas_4.jpg)
-![Máquinas 5](images/Máquinas_5.jpg)
-![Máquinas 6](images/Máquinas_6.jpg)
 
